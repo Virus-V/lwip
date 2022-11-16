@@ -355,7 +355,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
  * it can send them more efficiently by combining them together).
  * To prompt the system to send data now, call tcp_output() after
  * calling tcp_write().
- * 
+ *
  * This function enqueues the data pointed to by the argument dataptr. The length of
  * the data is passed as the len parameter. The apiflags can be one or more of:
  * - TCP_WRITE_FLAG_COPY: indicates whether the new memory should be allocated
@@ -1252,6 +1252,9 @@ tcp_output(struct tcp_pcb *pcb)
   LWIP_ASSERT("don't call tcp_output for listen-pcbs",
               pcb->state != LISTEN);
 
+  /* compensate tcp_ticks */
+  tcpip_tmr_compensate_tick();
+
   /* First, check if we are invoked by the TCP input processing
      code. If so, we do not output anything. Instead, we rely on the
      input processing code to call us when input processing is done
@@ -1311,7 +1314,7 @@ tcp_output(struct tcp_pcb *pcb)
      * smaller than 1 SMSS implies in-flight data
      */
     if (wnd == pcb->snd_wnd && pcb->unacked == NULL && pcb->persist_backoff == 0) {
-      pcb->persist_cnt = 0;
+      pcb->persist_last = tcp_ticks;
       pcb->persist_backoff = 1;
       pcb->persist_probe = 0;
     }
@@ -1382,6 +1385,9 @@ tcp_output(struct tcp_pcb *pcb)
       if (pcb->unacked == NULL) {
         pcb->unacked = seg;
         useg = seg;
+
+        pcb->rtime = tcp_ticks;
+        pcb->nrtx = 0;
         /* unacked list is not empty? */
       } else {
         /* In the case of fast retransmit, the packet should not go to the tail
@@ -1414,6 +1420,7 @@ tcp_output(struct tcp_pcb *pcb)
     pcb->unsent_oversize = 0;
   }
 #endif /* TCP_OVERSIZE */
+  tcp_timer_needed();
 
 output_done:
   tcp_clear_flags(pcb, TF_NAGLEMEMERR);
@@ -1530,10 +1537,10 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
   }
 #endif
 
-  /* Set retransmission timer running if it is not currently enabled
+  /* Update retransmission time if it is not currently in retransmitting
      This must be set before checking the route. */
-  if (pcb->rtime < 0) {
-    pcb->rtime = 0;
+  if (pcb->unacked != NULL) {
+    pcb->rtime = tcp_ticks;
   }
 
   if (pcb->rttest == 0) {
@@ -1809,8 +1816,8 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
       pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
       tcp_set_flags(pcb, TF_INFR);
 
-      /* Reset the retransmission timer to prevent immediate rto retransmissions */
-      pcb->rtime = 0;
+      /* Reset the retransmission time to prevent immediate rto retransmissions */
+      pcb->rtime = tcp_ticks;
     }
   }
 }
@@ -1949,6 +1956,10 @@ tcp_output_control_segment(const struct tcp_pcb *pcb, struct pbuf *p,
       tos = 0;
     }
     TCP_STATS_INC(tcp.xmit);
+
+    LWIP_DEBUGF(TCP_DEBUG, ("tcp_timer_opt tcp_output_control_segment"));
+    tcp_timer_needed();
+
     err = ip_output_if(p, src, dst, ttl, tos, IP_PROTO_TCP, netif);
     NETIF_RESET_HINTS(netif);
   }

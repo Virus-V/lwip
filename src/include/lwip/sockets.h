@@ -400,18 +400,26 @@ typedef struct ipv6_mreq {
  * we restrict parameters to at most 128 bytes.
  */
 #if !defined(FIONREAD) || !defined(FIONBIO)
+#ifndef IOCPARM_MASK
 #define IOCPARM_MASK    0x7fU           /* parameters must be < 128 bytes */
+#endif
 #define IOC_VOID        0x20000000UL    /* no parameters */
 #define IOC_OUT         0x40000000UL    /* copy out parameters */
 #define IOC_IN          0x80000000UL    /* copy in parameters */
 #define IOC_INOUT       (IOC_IN|IOC_OUT)
                                         /* 0x20000000 distinguishes new &
                                            old ioctl's */
+#ifndef _IO
 #define _IO(x,y)        ((long)(IOC_VOID|((x)<<8)|(y)))
+#endif
 
+#ifndef _IOR
 #define _IOR(x,y,t)     ((long)(IOC_OUT|((sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y)))
+#endif
 
+#ifndef _IOW
 #define _IOW(x,y,t)     ((long)(IOC_IN|((sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y)))
+#endif
 #endif /* !defined(FIONREAD) || !defined(FIONBIO) */
 
 #ifndef FIONREAD

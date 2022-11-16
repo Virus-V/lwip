@@ -137,6 +137,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   tcphdr = (struct tcp_hdr *)p->payload;
 
+  /* compensate tcp_ticks */
+  tcpip_tmr_compensate_tick();
+
 #if TCP_INPUT_DEBUG
   tcp_debug_print(tcphdr);
 #endif
@@ -306,6 +309,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif
         {
           tcp_timewait_input(pcb);
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_input: check timer(timedwait)"));
+          tcp_timer_needed();
         }
         pbuf_free(p);
         return;
@@ -378,6 +383,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif
       {
         tcp_listen_input(lpcb);
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_input: check timer(listen)"));
+        tcp_timer_needed();
       }
       pbuf_free(p);
       return;
@@ -394,6 +401,10 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #ifdef LWIP_HOOK_TCP_INPACKET_PCB
   if ((pcb != NULL) && LWIP_HOOK_TCP_INPACKET_PCB(pcb, tcphdr, tcphdr_optlen,
       tcphdr_opt1len, tcphdr_opt2, p) != ERR_OK) {
+
+    LWIP_DEBUGF(TCP_DEBUG, ("tcp_input: check timer(hook)"));
+    tcp_timer_needed();
+
     pbuf_free(p);
     return;
   }
@@ -581,6 +592,9 @@ aborted:
     }
     pbuf_free(p);
   }
+
+  LWIP_DEBUGF(TCP_DEBUG, ("tcp_input: check timer(tail)"));
+  tcp_timer_needed();
 
   LWIP_ASSERT("tcp_input: tcp_pcbs_sane()", tcp_pcbs_sane());
   PERF_STOP("tcp_input");
@@ -852,9 +866,8 @@ tcp_process(struct tcp_pcb *pcb)
   /* Do different things depending on the TCP state. */
   switch (pcb->state) {
     case SYN_SENT:
-      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("SYN-SENT: ackno %"U32_F" pcb->snd_nxt %"U32_F" unacked %s %"U32_F"\n",
-                                    ackno, pcb->snd_nxt, pcb->unacked ? "" : " empty:",
-                                    pcb->unacked ? lwip_ntohl(pcb->unacked->tcphdr->seqno) : 0));
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("SYN-SENT: ackno %"U32_F" pcb->snd_nxt %"U32_F" unacked %"U32_F"\n", ackno,
+                                    pcb->snd_nxt, lwip_ntohl(pcb->unacked->tcphdr->seqno)));
       /* received SYN ACK with expected sequence number? */
       if ((flags & TCP_ACK) && (flags & TCP_SYN)
           && (ackno == pcb->lastack + 1)) {
@@ -891,10 +904,8 @@ tcp_process(struct tcp_pcb *pcb)
 
         /* If there's nothing left to acknowledge, stop the retransmit
            timer, otherwise reset it to start again */
-        if (pcb->unacked == NULL) {
-          pcb->rtime = -1;
-        } else {
-          pcb->rtime = 0;
+        if (pcb->unacked != NULL) {
+          pcb->rtime = tcp_ticks;
           pcb->nrtx = 0;
         }
 
@@ -915,7 +926,7 @@ tcp_process(struct tcp_pcb *pcb)
           connection faster, but do not send more SYNs than we otherwise would
           have, or we might get caught in a loop on loopback interfaces. */
         if (pcb->nrtx < TCP_SYNMAXRTX) {
-          pcb->rtime = 0;
+          pcb->rtime = tcp_ticks;
           tcp_rexmit_rto(pcb);
         }
       }
@@ -1180,7 +1191,7 @@ tcp_receive(struct tcp_pcb *pcb)
      * 1) It doesn't ACK new data
      * 2) length of received packet is zero (i.e. no payload)
      * 3) the advertised window hasn't changed
-     * 4) There is outstanding unacknowledged data (retransmission timer running)
+     * 4) There is outstanding unacknowledged data (having unacked data)
      * 5) The ACK is == biggest ACK sequence number so far seen (snd_una)
      *
      * If it passes all five, should process as a dupack:
@@ -1202,7 +1213,7 @@ tcp_receive(struct tcp_pcb *pcb)
         /* Clause 3 */
         if (pcb->snd_wl2 + pcb->snd_wnd == right_wnd_edge) {
           /* Clause 4 */
-          if (pcb->rtime >= 0) {
+          if (pcb->unacked != NULL) {
             /* Clause 5 */
             if (pcb->lastack == ackno) {
               found_dupack = 1;
@@ -1293,13 +1304,11 @@ tcp_receive(struct tcp_pcb *pcb)
 
       /* If there's nothing left to acknowledge, stop the retransmit
          timer, otherwise reset it to start again */
-      if (pcb->unacked == NULL) {
-        pcb->rtime = -1;
-      } else {
-        pcb->rtime = 0;
+      if (pcb->unacked != NULL) {
+        pcb->rtime = tcp_ticks;
       }
 
-      pcb->polltmr = 0;
+      pcb->polltmr = tcp_ticks;
 
 #if TCP_OVERSIZE
       if (pcb->unsent == NULL) {

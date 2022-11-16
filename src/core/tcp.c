@@ -11,7 +11,7 @@
  * Common functions for the TCP implementation, such as functions
  * for manipulating the data structures and the TCP timer functions. TCP functions
  * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
- * 
+ *
  * TCP connection setup
  * --------------------
  * The functions used for setting up connections is similar to that of
@@ -24,7 +24,7 @@
  * - tcp_listen() and tcp_listen_with_backlog()
  * - tcp_accept()
  * - tcp_connect()
- * 
+ *
  * Sending TCP data
  * ----------------
  * TCP data is sent by enqueueing the data with a call to tcp_write() and
@@ -34,7 +34,7 @@
  * - tcp_write()
  * - tcp_output()
  * - tcp_sent()
- * 
+ *
  * Receiving TCP data
  * ------------------
  * TCP data reception is callback based - an application specified
@@ -44,7 +44,7 @@
  * window.
  * - tcp_recv()
  * - tcp_recved()
- * 
+ *
  * Application polling
  * -------------------
  * When a connection is idle (i.e., no data is either transmitted or
@@ -62,7 +62,7 @@
  * - tcp_close()
  * - tcp_abort()
  * - tcp_err()
- * 
+ *
  */
 
 /*
@@ -163,7 +163,7 @@ u32_t tcp_ticks;
 static const u8_t tcp_backoff[13] =
 { 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7};
 /* Times per slowtmr hits */
-static const u8_t tcp_persist_backoff[7] = { 3, 6, 12, 24, 48, 96, 120 };
+const u8_t tcp_persist_backoff[7] = { 3, 6, 12, 24, 48, 96, 120 };
 
 /* The TCP PCB lists. */
 
@@ -185,7 +185,6 @@ struct tcp_pcb **const tcp_pcb_lists[] = {&tcp_listen_pcbs.pcbs, &tcp_bound_pcbs
 u8_t tcp_active_pcbs_changed;
 
 /** Timer counter to handle calling slow-timer from tcp_tmr() */
-static u8_t tcp_timer;
 static u8_t tcp_timer_ctr;
 static u16_t tcp_new_port(void);
 
@@ -225,22 +224,6 @@ tcp_free_listen(struct tcp_pcb *pcb)
   tcp_ext_arg_invoke_callbacks_destroyed(pcb->ext_args);
 #endif
   memp_free(MEMP_TCP_PCB_LISTEN, pcb);
-}
-
-/**
- * Called periodically to dispatch TCP timers.
- */
-void
-tcp_tmr(void)
-{
-  /* Call tcp_fasttmr() every 250 ms */
-  tcp_fasttmr();
-
-  if (++tcp_timer & 1) {
-    /* Call tcp_slowtmr() every 500 ms, i.e., every other timer
-       tcp_tmr() is called. */
-    tcp_slowtmr();
-  }
 }
 
 #if LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG
@@ -425,6 +408,8 @@ tcp_close_shutdown_fin(struct tcp_pcb *pcb)
       if (err == ERR_OK) {
         MIB2_STATS_INC(mib2.tcpestabresets);
         pcb->state = FIN_WAIT_1;
+        pcb->fin_wait1_tmr = tcp_ticks;
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_send_fin FIN_WAIT_1"));
       }
       break;
     case CLOSE_WAIT:
@@ -469,7 +454,7 @@ tcp_close_shutdown_fin(struct tcp_pcb *pcb)
  * a closing state), the connection is closed, and put in a closing state.
  * The pcb is then automatically freed in tcp_slowtmr(). It is therefore
  * unsafe to reference it (unless an error is returned).
- * 
+ *
  * The function may return ERR_MEM if no memory
  * was available for closing the connection. If so, the application
  * should wait and try again either by using the acknowledgment
@@ -798,7 +783,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  * When an incoming connection is accepted, the function specified with
  * the tcp_accept() function will be called. The pcb has to be bound
  * to a local port with the tcp_bind() function.
- * 
+ *
  * The tcp_listen() function returns a new connection identifier, and
  * the one passed as an argument to the function will be
  * deallocated. The reason for this behavior is that less memory is
@@ -813,7 +798,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  * The backlog limits the number of outstanding connections
  * in the listen queue to the value specified by the backlog argument.
  * To use it, your need to set TCP_LISTEN_BACKLOG=1 in your lwipopts.h.
- * 
+ *
  * @param pcb the original tcp_pcb
  * @param backlog the incoming connections queue limit
  * @return tcp_pcb used for listening, consumes less memory.
@@ -1040,7 +1025,7 @@ again:
  * Connects to another host. The function given as the "connected"
  * argument will be called when the connection has been established.
  *  Sets up the pcb to connect to the remote host and sends the
- * initial SYN segment which opens the connection. 
+ * initial SYN segment which opens the connection.
  *
  * The tcp_connect() function returns immediately; it does not wait for
  * the connection to be properly setup. Instead, it will call the
@@ -1200,10 +1185,10 @@ tcp_slowtmr(void)
 
   err = ERR_OK;
 
-  ++tcp_ticks;
   ++tcp_timer_ctr;
 
 tcp_slowtmr_start:
+  LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: ticks %d\n", tcp_ticks));
   /* Steps through all of the active PCBs. */
   prev = NULL;
   pcb = tcp_active_pcbs;
@@ -1240,10 +1225,8 @@ tcp_slowtmr_start:
           ++pcb_remove; /* max probes reached */
         } else {
           u8_t backoff_cnt = tcp_persist_backoff[pcb->persist_backoff - 1];
-          if (pcb->persist_cnt < backoff_cnt) {
-            pcb->persist_cnt++;
-          }
-          if (pcb->persist_cnt >= backoff_cnt) {
+
+          if ((tcp_ticks - pcb->persist_last) >= backoff_cnt) {
             int next_slot = 1; /* increment timer to next slot */
             /* If snd_wnd is zero, send 1 byte probes */
             if (pcb->snd_wnd == 0) {
@@ -1260,7 +1243,7 @@ tcp_slowtmr_start:
               }
             }
             if (next_slot) {
-              pcb->persist_cnt = 0;
+              pcb->persist_last = tcp_ticks;
               if (pcb->persist_backoff < sizeof(tcp_persist_backoff)) {
                 pcb->persist_backoff++;
               }
@@ -1268,16 +1251,15 @@ tcp_slowtmr_start:
           }
         }
       } else {
-        /* Increase the retransmission timer if it is running */
-        if ((pcb->rtime >= 0) && (pcb->rtime < 0x7FFF)) {
-          ++pcb->rtime;
+        if (pcb->rto == 1) {
+          LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: change rto 1 to 2\n"));
+          pcb->rto = 2;
         }
-
-        if (pcb->rtime >= pcb->rto) {
+        if (pcb->unacked != NULL && (tcp_ticks - pcb->rtime) >= pcb->rto) {
           /* Time for a retransmission. */
-          LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %"S16_F
-                                      " pcb->rto %"S16_F"\n",
-                                      pcb->rtime, pcb->rto));
+          LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %"U32_F
+                                      " pcb->rto %"U32_F"\n",
+                                      tcp_ticks - pcb->rtime, pcb->rto));
           /* If prepare phase fails but we have unsent data but no unacked data,
              still execute the backoff calculations below, as this means we somehow
              failed to send segment. */
@@ -1291,8 +1273,9 @@ tcp_slowtmr_start:
             }
 
             /* Reset the retransmission timer. */
-            pcb->rtime = 0;
+            pcb->rtime = tcp_ticks;
 
+#if 1
             /* Reduce congestion window and ssthresh. */
             eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
             pcb->ssthresh = eff_wnd >> 1;
@@ -1303,6 +1286,7 @@ tcp_slowtmr_start:
             LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %"TCPWNDSIZE_F
                                          " ssthresh %"TCPWNDSIZE_F"\n",
                                          pcb->cwnd, pcb->ssthresh));
+#endif
             pcb->bytes_acked = 0;
 
             /* The following needs to be called AFTER cwnd is set to one
@@ -1312,13 +1296,22 @@ tcp_slowtmr_start:
         }
       }
     }
+
     /* Check if this PCB has stayed too long in FIN-WAIT-2 */
+    if (pcb->state == FIN_WAIT_1 && pcb->fin_wait1_tmr != 0) {
+        if ((u32_t)(tcp_ticks - pcb->fin_wait1_tmr) >=
+            TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
+          pcb->fin_wait1_tmr = 0;
+          ++pcb_remove;
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-1\n"));
+        }
+    }
     if (pcb->state == FIN_WAIT_2) {
       /* If this PCB is in FIN_WAIT_2 because of SHUT_WR don't let it time out. */
       if (pcb->flags & TF_RXCLOSED) {
         /* PCB was fully closed (either through close() or SHUT_RDWR):
            normal FIN-WAIT timeout handling. */
-        if ((u32_t)(tcp_ticks - pcb->tmr) >
+        if ((u32_t)(tcp_ticks - pcb->tmr) >=
             TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
           ++pcb_remove;
           LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-2\n"));
@@ -1326,11 +1319,12 @@ tcp_slowtmr_start:
       }
     }
 
+#if 0
     /* Check if KEEPALIVE should be sent */
     if (ip_get_option(pcb, SOF_KEEPALIVE) &&
         ((pcb->state == ESTABLISHED) ||
          (pcb->state == CLOSE_WAIT))) {
-      if ((u32_t)(tcp_ticks - pcb->tmr) >
+      if ((u32_t)(tcp_ticks - pcb->tmr) >=
           (pcb->keep_idle + TCP_KEEP_DUR(pcb)) / TCP_SLOW_INTERVAL) {
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to "));
         ip_addr_debug_print_val(TCP_DEBUG, pcb->remote_ip);
@@ -1338,7 +1332,7 @@ tcp_slowtmr_start:
 
         ++pcb_remove;
         ++pcb_reset;
-      } else if ((u32_t)(tcp_ticks - pcb->tmr) >
+      } else if ((u32_t)(tcp_ticks - pcb->tmr) >=
                  (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEP_INTVL(pcb))
                  / TCP_SLOW_INTERVAL) {
         err = tcp_keepalive(pcb);
@@ -1347,6 +1341,7 @@ tcp_slowtmr_start:
         }
       }
     }
+#endif
 
     /* If this PCB has queued out of sequence data, but has been
        inactive for too long, will drop the data (it will eventually
@@ -1361,7 +1356,7 @@ tcp_slowtmr_start:
 
     /* Check if this PCB has stayed too long in SYN-RCVD */
     if (pcb->state == SYN_RCVD) {
-      if ((u32_t)(tcp_ticks - pcb->tmr) >
+      if ((u32_t)(tcp_ticks - pcb->tmr) >=
           TCP_SYN_RCVD_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in SYN-RCVD\n"));
@@ -1370,7 +1365,7 @@ tcp_slowtmr_start:
 
     /* Check if this PCB has stayed too long in LAST-ACK */
     if (pcb->state == LAST_ACK) {
-      if ((u32_t)(tcp_ticks - pcb->tmr) > 2 * TCP_MSL / TCP_SLOW_INTERVAL) {
+      if ((u32_t)(tcp_ticks - pcb->tmr) >= 2 * TCP_MSL / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in LAST-ACK\n"));
       }
@@ -1417,9 +1412,8 @@ tcp_slowtmr_start:
       pcb = pcb->next;
 
       /* We check if we should poll the connection. */
-      ++prev->polltmr;
-      if (prev->polltmr >= prev->pollinterval) {
-        prev->polltmr = 0;
+      if ((tcp_ticks - prev->polltmr) >= prev->pollinterval) {
+        prev->polltmr = tcp_ticks;
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: polling application\n"));
         tcp_active_pcbs_changed = 0;
         TCP_EVENT_POLL(prev, err);
@@ -1443,12 +1437,15 @@ tcp_slowtmr_start:
     pcb_remove = 0;
 
     /* Check if this PCB has stayed long enough in TIME-WAIT */
-    if ((u32_t)(tcp_ticks - pcb->tmr) > 2 * TCP_MSL / TCP_SLOW_INTERVAL) {
+
+    LWIP_DEBUGF(TCP_DEBUG, ("processing for TIME-WAIT, tcp_ticks:%d, pcb->tmr:%d\n", tcp_ticks, pcb->tmr));
+    if ((u32_t)(tcp_ticks - pcb->tmr) >= 2 * TCP_MSL / TCP_SLOW_INTERVAL) {
       ++pcb_remove;
     }
 
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
+      LWIP_DEBUGF(TCP_DEBUG, ("pcb_remove for TIME-WAIT\n"));
       struct tcp_pcb *pcb2;
       tcp_pcb_purge(pcb);
       /* Remove PCB from tcp_tw_pcbs list. */
@@ -1712,14 +1709,14 @@ tcp_kill_prio(u8_t prio)
 
   mprio = LWIP_MIN(TCP_PRIO_MAX, prio);
 
-  /* We want to kill connections with a lower prio, so bail out if 
+  /* We want to kill connections with a lower prio, so bail out if
    * supplied prio is 0 - there can never be a lower prio
    */
   if (mprio == 0) {
     return;
   }
 
-  /* We only want kill connections with a lower prio, so decrement prio by one 
+  /* We only want kill connections with a lower prio, so decrement prio by one
    * and start searching for oldest connection with same or lower priority than mprio.
    * We want to find the connections with the lowest possible prio, and among
    * these the one with the longest inactivity time.
@@ -1900,9 +1897,10 @@ tcp_alloc(u8_t prio)
     pcb->mss = INITIAL_MSS;
     pcb->rto = 3000 / TCP_SLOW_INTERVAL;
     pcb->sv = 3000 / TCP_SLOW_INTERVAL;
-    pcb->rtime = -1;
+    pcb->rtime = 0;
     pcb->cwnd = 1;
     pcb->tmr = tcp_ticks;
+    pcb->fin_wait1_tmr = 0;
     pcb->last_timer = tcp_timer_ctr;
 
     /* RFC 5681 recommends setting ssthresh abritrarily high and gives an example
@@ -2044,7 +2042,7 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
  * @ingroup tcp_raw
  * Used to specify the function that should be called when a fatal error
  * has occurred on the connection.
- * 
+ *
  * If a connection is aborted because of an error, the application is
  * alerted of this event by the err callback. Errors that might abort a
  * connection are when there is a shortage of memory. The callback
@@ -2095,7 +2093,7 @@ tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
  * number of TCP coarse grained timer shots, which typically occurs
  * twice a second. An interval of 10 means that the application would
  * be polled every 5 seconds.
- * 
+ *
  * When a connection is idle (i.e., no data is either transmitted or
  * received), lwIP will repeatedly poll the application by calling a
  * specified callback function. This can be used either as a watchdog
@@ -2157,10 +2155,6 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
       tcp_free_ooseq(pcb);
     }
 #endif /* TCP_QUEUE_OOSEQ */
-
-    /* Stop the retransmission timer as it will expect data on unacked
-       queue if it fires */
-    pcb->rtime = -1;
 
     tcp_segs_free(pcb->unsent);
     tcp_segs_free(pcb->unacked);
