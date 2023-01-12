@@ -46,11 +46,11 @@
  * This is an arch independent SLIP netif. The specific serial hooks must be
  * provided by another file. They are sio_open, sio_read/sio_tryread and sio_send
  *
- * Usage: This netif can be used in three ways:\n
+ * Usage: This netif can be used in three ways:\r\n
  *        1) For NO_SYS==0, an RX thread can be used which blocks on sio_read()
- *           until data is received.\n
+ *           until data is received.\r\n
  *        2) In your main loop, call slipif_poll() to check for new RX bytes,
- *           completed packets are fed into netif->input().\n
+ *           completed packets are fed into netif->input().\r\n
  *        3) Call slipif_received_byte[s]() from your serial RX ISR and
  *           slipif_process_rxqueue() from your main loop. ISR level decodes
  *           packets and puts completed packets on a queue which is fed into
@@ -124,7 +124,7 @@ slipif_output(struct netif *netif, struct pbuf *p)
   LWIP_ASSERT("netif->state != NULL", (netif->state != NULL));
   LWIP_ASSERT("p != NULL", (p != NULL));
 
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\n", p->tot_len));
+  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\r\n", p->tot_len));
   priv = (struct slipif_priv *)netif->state;
 
   /* Send pbuf out on the serial I/O device. */
@@ -225,7 +225,7 @@ slipif_rxbyte(struct netif *netif, u8_t c)
 
             LINK_STATS_INC(link.recv);
 
-            LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
+            LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\r\n", priv->recved));
             t = priv->q;
             priv->p = priv->q = NULL;
             priv->i = priv->recved = 0;
@@ -261,12 +261,12 @@ slipif_rxbyte(struct netif *netif, u8_t c)
   /* byte received, packet not yet completely received */
   if (priv->p == NULL) {
     /* allocate a new pbuf */
-    LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
+    LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\r\n"));
     priv->p = pbuf_alloc(PBUF_LINK, (PBUF_POOL_BUFSIZE - PBUF_LINK_HLEN - PBUF_LINK_ENCAPSULATION_HLEN), PBUF_POOL);
 
     if (priv->p == NULL) {
       LINK_STATS_INC(link.drop);
-      LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
+      LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\r\n"));
       /* don't process any further since we got no pbuf to receive to */
       return NULL;
     }
@@ -367,7 +367,7 @@ slipif_init(struct netif *netif)
   /* netif->state contains serial port number */
   sio_num = LWIP_PTR_NUMERIC_CAST(u8_t, netif->state);
 
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (u16_t)sio_num));
+  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\r\n", (u16_t)sio_num));
 
   /* Allocate private data */
   priv = (struct slipif_priv *)mem_malloc(sizeof(struct slipif_priv));

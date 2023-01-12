@@ -212,7 +212,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
      cannot starve rx. */
   nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
   if (nb == NULL) {
-    PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: alloc fail\n", ppp->netif->num));
+    PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: alloc fail\r\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
     MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
@@ -240,9 +240,9 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
 
   err = pppos_output_last(pppos, err, nb, &fcs_out);
   if (err == ERR_OK) {
-    PPPDEBUG(LOG_INFO, ("pppos_write[%d]: len=%d\n", ppp->netif->num, p->len));
+    PPPDEBUG(LOG_INFO, ("pppos_write[%d]: len=%d\r\n", ppp->netif->num, p->len));
   } else {
-    PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: output failed len=%d\n", ppp->netif->num, p->len));
+    PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: output failed len=%d\r\n", ppp->netif->num, p->len));
   }
   pbuf_free(p);
   return err;
@@ -263,7 +263,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
      cannot starve rx. */
   nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
   if (nb == NULL) {
-    PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: alloc fail\n", ppp->netif->num));
+    PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: alloc fail\r\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
     MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
@@ -302,9 +302,9 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
 
   err = pppos_output_last(pppos, err, nb, &fcs_out);
   if (err == ERR_OK) {
-    PPPDEBUG(LOG_INFO, ("pppos_netif_output[%d]: proto=0x%"X16_F", len = %d\n", ppp->netif->num, protocol, pb->tot_len));
+    PPPDEBUG(LOG_INFO, ("pppos_netif_output[%d]: proto=0x%"X16_F", len = %d\r\n", ppp->netif->num, protocol, pb->tot_len));
   } else {
-    PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: output failed proto=0x%"X16_F", len = %d\n", ppp->netif->num, protocol, pb->tot_len));
+    PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: output failed proto=0x%"X16_F", len = %d\r\n", ppp->netif->num, protocol, pb->tot_len));
   }
   return err;
 }
@@ -336,7 +336,7 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
   /*
    * Start the connection and handle incoming events (packet or timeout).
    */
-  PPPDEBUG(LOG_INFO, ("pppos_connect: unit %d: connecting\n", ppp->netif->num));
+  PPPDEBUG(LOG_INFO, ("pppos_connect: unit %d: connecting\r\n", ppp->netif->num));
   ppp_start(ppp); /* notify upper layers */
 }
 
@@ -368,7 +368,7 @@ pppos_listen(ppp_pcb *ppp, void *ctx)
   /*
    * Wait for something to happen.
    */
-  PPPDEBUG(LOG_INFO, ("pppos_listen: unit %d: listening\n", ppp->netif->num));
+  PPPDEBUG(LOG_INFO, ("pppos_listen: unit %d: listening\r\n", ppp->netif->num));
   ppp_start(ppp); /* notify upper layers */
 }
 #endif /* PPP_SERVER */
@@ -486,7 +486,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
   LWIP_ASSERT_CORE_LOCKED();
 #endif
 
-  PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
+  PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\r\n", ppp->netif->num, l));
   while (l-- > 0) {
     cur_char = *s++;
 
@@ -519,14 +519,14 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
         /* If we haven't received the packet header, drop what has come in. */
         } else if (pppos->in_state < PDDATA) {
           PPPDEBUG(LOG_WARNING,
-                   ("pppos_input[%d]: Dropping incomplete packet %d\n",
+                   ("pppos_input[%d]: Dropping incomplete packet %d\r\n",
                     ppp->netif->num, pppos->in_state));
           LINK_STATS_INC(link.lenerr);
           pppos_input_drop(pppos);
         /* If the fcs is invalid, drop the packet. */
         } else if (pppos->in_fcs != PPP_GOODFCS) {
           PPPDEBUG(LOG_INFO,
-                   ("pppos_input[%d]: Dropping bad fcs 0x%"X16_F" proto=0x%"X16_F"\n",
+                   ("pppos_input[%d]: Dropping bad fcs 0x%"X16_F" proto=0x%"X16_F"\r\n",
                     ppp->netif->num, pppos->in_fcs, pppos->in_protocol));
           /* Note: If you get lots of these, check for UART frame errors or try different baud rate */
           LINK_STATS_INC(link.chkerr);
@@ -562,7 +562,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
 #endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
 #if PPP_INPROC_IRQ_SAFE
           if(tcpip_try_callback(pppos_input_callback, inp) != ERR_OK) {
-            PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", ppp->netif->num));
+            PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\r\n", ppp->netif->num));
             pbuf_free(inp);
             LINK_STATS_INC(link.drop);
             MIB2_STATS_NETIF_INC(ppp->netif, ifindiscards);
@@ -580,7 +580,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
        * been inserted by the physical layer so here we just drop them. */
       } else {
         PPPDEBUG(LOG_WARNING,
-                 ("pppos_input[%d]: Dropping ACCM char <%d>\n", ppp->netif->num, cur_char));
+                 ("pppos_input[%d]: Dropping ACCM char <%d>\r\n", ppp->netif->num, cur_char));
       }
     /* Process other characters. */
     } else {
@@ -628,7 +628,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
 #if 0
           else {
             PPPDEBUG(LOG_WARNING,
-                     ("pppos_input[%d]: Invalid control <%d>\n", ppp->netif->num, cur_char));
+                     ("pppos_input[%d]: Invalid control <%d>\r\n", ppp->netif->num, cur_char));
             pppos->in_state = PDSTART;
           }
 #endif
@@ -677,7 +677,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
               /* No free buffers.  Drop the input packet and let the
                * higher layers deal with it.  Continue processing
                * the received pbuf chain in case a new packet starts. */
-              PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE PBUFS!\n", ppp->netif->num));
+              PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE PBUFS!\r\n", ppp->netif->num));
               LINK_STATS_INC(link.memerr);
               pppos_input_drop(pppos);
               pppos->in_state = PDSTART;  /* Wait for flag sequence. */
@@ -719,7 +719,7 @@ static void pppos_input_callback(void *arg) {
 
   ppp = ((struct pppos_input_header*)pb->payload)->ppp;
   if(pbuf_remove_header(pb, sizeof(struct pppos_input_header))) {
-    LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+    LWIP_ASSERT("pbuf_remove_header failed\r\n", 0);
     goto drop;
   }
 
@@ -749,7 +749,7 @@ pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
     pppos->out_accm[i] = (u8_t)((accm >> (8 * i)) & 0xFF);
   }
 
-  PPPDEBUG(LOG_INFO, ("pppos_send_config[%d]: out_accm=%X %X %X %X\n",
+  PPPDEBUG(LOG_INFO, ("pppos_send_config[%d]: out_accm=%X %X %X %X\r\n",
             pppos->ppp->netif->num,
             pppos->out_accm[0], pppos->out_accm[1], pppos->out_accm[2], pppos->out_accm[3]));
 }
@@ -771,7 +771,7 @@ pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
   }
   PPPOS_UNPROTECT(lev);
 
-  PPPDEBUG(LOG_INFO, ("pppos_recv_config[%d]: in_accm=%X %X %X %X\n",
+  PPPDEBUG(LOG_INFO, ("pppos_recv_config[%d]: in_accm=%X %X %X %X\r\n",
             pppos->ppp->netif->num,
             pppos->in_accm[0], pppos->in_accm[1], pppos->in_accm[2], pppos->in_accm[3]));
 }
@@ -800,9 +800,9 @@ pppos_input_drop(pppos_pcb *pppos)
 {
   if (pppos->in_head != NULL) {
 #if 0
-    PPPDEBUG(LOG_INFO, ("pppos_input_drop: %d:%.*H\n", pppos->in_head->len, min(60, pppos->in_head->len * 2), pppos->in_head->payload));
+    PPPDEBUG(LOG_INFO, ("pppos_input_drop: %d:%.*H\r\n", pppos->in_head->len, min(60, pppos->in_head->len * 2), pppos->in_head->payload));
 #endif
-    PPPDEBUG(LOG_INFO, ("pppos_input_drop: pbuf len=%d, addr %p\n", pppos->in_head->len, (void*)pppos->in_head));
+    PPPDEBUG(LOG_INFO, ("pppos_input_drop: pbuf len=%d, addr %p\r\n", pppos->in_head->len, (void*)pppos->in_head));
   }
   pppos_input_free_current_packet(pppos);
 #if VJ_SUPPORT

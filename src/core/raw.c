@@ -2,14 +2,14 @@
  * @file
  * Implementation of raw protocol PCBs for low-level handling of
  * different types of protocols besides (or overriding) those
- * already available in lwIP.\n
+ * already available in lwIP.\r\n
  * See also @ref raw_raw
  *
  * @defgroup raw_raw RAW
  * @ingroup callbackstyle_api
  * Implementation of raw protocol PCBs for low-level handling of
  * different types of protocols besides (or overriding) those
- * already available in lwIP.\n
+ * already available in lwIP.\r\n
  * @see @ref api
  */
 
@@ -360,7 +360,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
     return ERR_VAL;
   }
 
-  LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\n"));
+  LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\r\n"));
 
   if (pcb->netif_idx != NETIF_NO_INDEX) {
     netif = netif_get_by_index(pcb->netif_idx);
@@ -466,7 +466,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
     q = pbuf_alloc(PBUF_IP, 0, PBUF_RAM);
     /* new header pbuf could not be allocated? */
     if (q == NULL) {
-      LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("raw_sendto: could not allocate header\n"));
+      LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("raw_sendto: could not allocate header\r\n"));
       return ERR_MEM;
     }
     if (p->tot_len != 0) {
@@ -474,7 +474,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
       pbuf_chain(q, p);
     }
     /* { first pbuf q points to header pbuf } */
-    LWIP_DEBUGF(RAW_DEBUG, ("raw_sendto: added header pbuf %p before given pbuf %p\n", (void *)q, (void *)p));
+    LWIP_DEBUGF(RAW_DEBUG, ("raw_sendto: added header pbuf %p before given pbuf %p\r\n", (void *)q, (void *)p));
   } else {
     /* first pbuf q equals given pbuf */
     q = p;
@@ -488,7 +488,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   if (IP_IS_V4(dst_ip)) {
     /* broadcast filter? */
     if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(dst_ip, netif)) {
-      LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
+      LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\r\n", (void *)pcb));
       /* free any temporary header pbuf allocated by pbuf_header() */
       if (q != p) {
         pbuf_free(q);
@@ -596,7 +596,7 @@ raw_new(u8_t proto)
 {
   struct raw_pcb *pcb;
 
-  LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_new\n"));
+  LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_new\r\n"));
   LWIP_ASSERT_CORE_LOCKED();
 
   pcb = (struct raw_pcb *)memp_malloc(MEMP_RAW_PCB);

@@ -278,7 +278,7 @@ altcp_mbedtls_lower_recv_process(struct altcp_pcb *conn, altcp_mbedtls_state_t *
       return ERR_OK;
     }
     if (ret != 0) {
-      LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_handshake failed: %d\n", ret));
+      LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_handshake failed: %d\r\n", ret));
       /* handshake failed, connection has to be closed */
       if (conn->err) {
         conn->err(conn->arg, ERR_CLSD);
@@ -383,13 +383,13 @@ altcp_mbedtls_handle_rx_appldata(struct altcp_pcb *conn, altcp_mbedtls_state_t *
     if (ret < 0) {
       if (ret == MBEDTLS_ERR_SSL_CLIENT_RECONNECT) {
         /* client is initiating a new connection using the same source port -> close connection or make handshake */
-        LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("new connection on same source port\n"));
+        LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("new connection on same source port\r\n"));
         LWIP_ASSERT("TODO: new connection on same source port, close this connection", 0);
       } else if ((ret != MBEDTLS_ERR_SSL_WANT_READ) && (ret != MBEDTLS_ERR_SSL_WANT_WRITE)) {
         if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
-          LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("connection was closed gracefully\n"));
+          LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("connection was closed gracefully\r\n"));
         } else if (ret == MBEDTLS_ERR_NET_CONN_RESET) {
-          LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("connection was reset by peer\n"));
+          LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("connection was reset by peer\r\n"));
         }
         pbuf_free(buf);
         return ERR_OK;
@@ -607,7 +607,7 @@ altcp_mbedtls_setup(void *conf, struct altcp_pcb *conn, struct altcp_pcb *inner_
   mbedtls_ssl_init(&state->ssl_context);
   ret = mbedtls_ssl_setup(&state->ssl_context, &config->conf);
   if (ret != 0) {
-    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_setup failed\n"));
+    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_setup failed\r\n"));
     /* @todo: convert 'ret' to err_t */
     altcp_mbedtls_free(conf, state);
     return ERR_MEM;
@@ -677,7 +677,7 @@ altcp_tls_create_config(int is_server, uint8_t cert_count, uint8_t pkey_count, i
 
   if (TCP_WND < MBEDTLS_SSL_MAX_CONTENT_LEN) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG|LWIP_DBG_LEVEL_SERIOUS,
-      ("altcp_tls: TCP_WND is smaller than the RX decrypion buffer, connection RX might stall!\n"));
+      ("altcp_tls: TCP_WND is smaller than the RX decrypion buffer, connection RX might stall!\r\n"));
   }
 
   altcp_mbedtls_mem_init();
@@ -725,7 +725,7 @@ altcp_tls_create_config(int is_server, uint8_t cert_count, uint8_t pkey_count, i
                                   mbedtls_entropy_func, &altcp_tls_entropy_rng->entropy,
                                   ALTCP_MBEDTLS_ENTROPY_PTR, ALTCP_MBEDTLS_ENTROPY_LEN);
       if (ret != 0) {
-        LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ctr_drbg_seed failed: %d\n", ret));
+        LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ctr_drbg_seed failed: %d\r\n", ret));
         mbedtls_ctr_drbg_free(&altcp_tls_entropy_rng->ctr_drbg);
         mbedtls_entropy_free(&altcp_tls_entropy_rng->entropy);
         altcp_mbedtls_free_config(altcp_tls_entropy_rng);
@@ -745,7 +745,7 @@ altcp_tls_create_config(int is_server, uint8_t cert_count, uint8_t pkey_count, i
   ret = mbedtls_ssl_config_defaults(&conf->conf, is_server ? MBEDTLS_SSL_IS_SERVER : MBEDTLS_SSL_IS_CLIENT,
                                     MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
   if (ret != 0) {
-    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_config_defaults failed: %d\n", ret));
+    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_config_defaults failed: %d\r\n", ret));
     if (altcp_tls_entropy_rng->ref == 1) {
       mbedtls_ctr_drbg_free(&altcp_tls_entropy_rng->ctr_drbg);
       mbedtls_entropy_free(&altcp_tls_entropy_rng->entropy);
@@ -773,7 +773,7 @@ altcp_tls_create_config(int is_server, uint8_t cert_count, uint8_t pkey_count, i
   ret = mbedtls_ssl_ticket_setup(&conf->ticket_ctx, mbedtls_ctr_drbg_random, &altcp_tls_entropy_rng->ctr_drbg,
     ALTCP_MBEDTLS_SESSION_TICKET_CIPHER, ALTCP_MBEDTLS_SESSION_TICKET_TIMEOUT_SECONDS);
   if (ret) {
-    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_ticket_setup failed: %d\n", ret));
+    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_ticket_setup failed: %d\r\n", ret));
     altcp_mbedtls_free_config(conf);
     return NULL;
   }
@@ -821,20 +821,20 @@ err_t altcp_tls_config_server_add_privkey_cert(struct altcp_tls_config *config,
   /* Load the certificates and private key */
   ret = mbedtls_x509_crt_parse(srvcert, cert, cert_len);
   if (ret != 0) {
-    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_x509_crt_parse failed: %d\n", ret));
+    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_x509_crt_parse failed: %d\r\n", ret));
     return ERR_VAL;
   }
 
   ret = mbedtls_pk_parse_key(pkey, (const unsigned char *) privkey, privkey_len, privkey_pass, privkey_pass_len);
   if (ret != 0) {
-    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_pk_parse_public_key failed: %d\n", ret));
+    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_pk_parse_public_key failed: %d\r\n", ret));
     mbedtls_x509_crt_free(srvcert);
     return ERR_VAL;
   }
 
   ret = mbedtls_ssl_conf_own_cert(&config->conf, srvcert, pkey);
   if (ret != 0) {
-    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_conf_own_cert failed: %d\n", ret));
+    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_conf_own_cert failed: %d\r\n", ret));
     mbedtls_x509_crt_free(srvcert);
     mbedtls_pk_free(pkey);
     return ERR_VAL;

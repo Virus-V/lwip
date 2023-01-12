@@ -100,7 +100,7 @@ static u32_t magic_randomseed;    /* Seed used for random number generation. */
 static void magic_churnrand(char *rand_data, u32_t rand_len) {
   lwip_md5_context md5_ctx;
 
-  /* LWIP_DEBUGF(LOG_INFO, ("magic_churnrand: %u@%P\n", rand_len, rand_data)); */
+  /* LWIP_DEBUGF(LOG_INFO, ("magic_churnrand: %u@%P\r\n", rand_len, rand_data)); */
   lwip_md5_init(&md5_ctx);
   lwip_md5_starts(&md5_ctx);
   lwip_md5_update(&md5_ctx, (u_char *)magic_randpool, sizeof(magic_randpool));
@@ -124,7 +124,7 @@ static void magic_churnrand(char *rand_data, u32_t rand_len) {
   }
   lwip_md5_finish(&md5_ctx, (u_char *)magic_randpool);
   lwip_md5_free(&md5_ctx);
-/*  LWIP_DEBUGF(LOG_INFO, ("magic_churnrand: -> 0\n")); */
+/*  LWIP_DEBUGF(LOG_INFO, ("magic_churnrand: -> 0\r\n")); */
 }
 
 /*

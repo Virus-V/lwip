@@ -1,6 +1,6 @@
 /**
  * @file
- * UDP API (to be used from TCPIP thread)\n
+ * UDP API (to be used from TCPIP thread)\r\n
  * See also @ref udp_raw
  */
 

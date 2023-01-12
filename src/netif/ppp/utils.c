@@ -308,7 +308,7 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
 			OUTCHAR('\\');
 			switch (c) {
 			case '\t':	OUTCHAR('t');	break;
-			case '\n':	OUTCHAR('n');	break;
+			case '\r\n':	OUTCHAR('n');	break;
 			case '\b':	OUTCHAR('b');	break;
 			case '\f':	OUTCHAR('f');	break;
 			default:
@@ -531,7 +531,7 @@ pr_log (void *arg, const char *fmt, ...)
 	va_end(pvar);
 
 	p = buf;
-	eol = strchr(buf, '\n');
+	eol = strchr(buf, '\r\n');
 	if (linep != line) {
 		l = (eol == NULL)? n: eol - buf;
 		if (linep + l < line + sizeof(line)) {
@@ -542,7 +542,7 @@ pr_log (void *arg, const char *fmt, ...)
 			if (eol == NULL)
 				return;
 			p = eol + 1;
-			eol = strchr(p, '\n');
+			eol = strchr(p, '\r\n');
 		}
 		*linep = 0;
 		ppp_log_write(llevel, line);
@@ -553,7 +553,7 @@ pr_log (void *arg, const char *fmt, ...)
 		*eol = 0;
 		ppp_log_write(llevel, p);
 		p = eol + 1;
-		eol = strchr(p, '\n');
+		eol = strchr(p, '\r\n');
 	}
 
 	/* assumes sizeof(buf) <= sizeof(line) */
@@ -581,8 +581,8 @@ void ppp_print_string(const u_char *p, int len, void (*printer) (void *, const c
 	    printer(arg, "%c", c);
 	} else {
 	    switch (c) {
-	    case '\n':
-		printer(arg, "\\n");
+	    case '\r\n':
+		printer(arg, "\\r\n");
 		break;
 	    case '\r':
 		printer(arg, "\\r");
@@ -612,15 +612,15 @@ static void ppp_logit(int level, const char *fmt, va_list args) {
 static void ppp_log_write(int level, char *buf) {
     LWIP_UNUSED_ARG(level); /* necessary if PPPDEBUG is defined to an empty function */
     LWIP_UNUSED_ARG(buf);
-    PPPDEBUG(level, ("%s\n", buf) );
+    PPPDEBUG(level, ("%s\r\n", buf) );
 #if 0
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {
 	int n = strlen(buf);
 
-	if (n > 0 && buf[n-1] == '\n')
+	if (n > 0 && buf[n-1] == '\r\n')
 	    --n;
 	if (write(log_to_fd, buf, n) != n
-	    || write(log_to_fd, "\n", 1) != 1)
+	    || write(log_to_fd, "\r\n", 1) != 1)
 	    log_to_fd = -1;
     }
 #endif
@@ -883,7 +883,7 @@ lock(dev)
 
     pid = getpid();
 #ifndef LOCK_BINARY
-    ppp_slprintf(lock_buffer, sizeof(lock_buffer), "%10d\n", pid);
+    ppp_slprintf(lock_buffer, sizeof(lock_buffer), "%10d\r\n", pid);
     write (fd, lock_buffer, 11);
 #else
     write(fd, &pid, sizeof (pid));
@@ -925,7 +925,7 @@ relock(pid)
     }
 
 #ifndef LOCK_BINARY
-    ppp_slprintf(lock_buffer, sizeof(lock_buffer), "%10d\n", pid);
+    ppp_slprintf(lock_buffer, sizeof(lock_buffer), "%10d\r\n", pid);
     write (fd, lock_buffer, 11);
 #else
     write(fd, &pid, sizeof(pid));

@@ -739,7 +739,7 @@ static void lcp_resetci(fsm *f) {
 #if EAP_SUPPORT
     PPPDEBUG(LOG_DEBUG, (" EAP=%d", ao->neg_eap));
 #endif /* EAP_SUPPORT */
-    PPPDEBUG(LOG_DEBUG, ("\n"));
+    PPPDEBUG(LOG_DEBUG, ("\r\n"));
 
 #endif /* PPP_AUTH_SUPPORT */
 

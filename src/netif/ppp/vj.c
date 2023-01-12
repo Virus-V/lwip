@@ -196,7 +196,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
   hlen = ilen + TCPH_HDRLEN(th);
   hlen <<= 2;
   if (np->len < hlen) {
-    PPPDEBUG(LOG_INFO, ("vj_compress_tcp: header len %d spans buffers\n", hlen));
+    PPPDEBUG(LOG_INFO, ("vj_compress_tcp: header len %d spans buffers\r\n", hlen));
     return (TYPE_IP);
   }
 
@@ -409,7 +409,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
     hlen -= deltaS + 4;
     if (pbuf_remove_header(np, hlen)){
       /* Can we cope with this failing?  Just assert for now */
-      LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+      LWIP_ASSERT("pbuf_remove_header failed\r\n", 0);
     }
     cp = (u8_t*)np->payload;
     *cp++ = (u8_t)(changes | NEW_C);
@@ -418,7 +418,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
     hlen -= deltaS + 3;
     if (pbuf_remove_header(np, hlen)) {
       /* Can we cope with this failing?  Just assert for now */
-      LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+      LWIP_ASSERT("pbuf_remove_header failed\r\n", 0);
     }
     cp = (u8_t*)np->payload;
     *cp++ = (u8_t)changes;
@@ -469,7 +469,7 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
       || (hlen += TCPH_HDRLEN_BYTES((struct tcp_hdr *)&((char *)ip)[hlen]))
           > nb->len
       || hlen > MAX_HDR) {
-    PPPDEBUG(LOG_INFO, ("vj_uncompress_uncomp: bad cid=%d, hlen=%d buflen=%d\n",
+    PPPDEBUG(LOG_INFO, ("vj_uncompress_uncomp: bad cid=%d, hlen=%d buflen=%d\r\n",
       IPH_PROTO(ip), hlen, nb->len));
     vj_uncompress_err(comp);
     return -1;
@@ -513,7 +513,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
      * If we have a good state index, clear the 'discard' flag.
      */
     if (*cp >= MAX_SLOTS) {
-      PPPDEBUG(LOG_INFO, ("vj_uncompress_tcp: bad cid=%d\n", *cp));
+      PPPDEBUG(LOG_INFO, ("vj_uncompress_tcp: bad cid=%d\r\n", *cp));
       goto bad;
     }
 
@@ -526,7 +526,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
      * explicit state index, we have to toss the packet.
      */
     if (comp->flags & VJF_TOSS) {
-      PPPDEBUG(LOG_INFO, ("vj_uncompress_tcp: tossing\n"));
+      PPPDEBUG(LOG_INFO, ("vj_uncompress_tcp: tossing\r\n"));
       INCR(vjs_tossed);
       return (-1);
     }
@@ -596,7 +596,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
      * We must have dropped some characters (crc should detect
      * this but the old slip framing won't)
      */
-    PPPDEBUG(LOG_INFO, ("vj_uncompress_tcp: head buffer %d too short %d\n",
+    PPPDEBUG(LOG_INFO, ("vj_uncompress_tcp: head buffer %d too short %d\r\n",
           n0->len, vjlen));
     goto bad;
   }
@@ -621,7 +621,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
   /* Remove the compressed header and prepend the uncompressed header. */
   if (pbuf_remove_header(n0, vjlen)) {
     /* Can we cope with this failing?  Just assert for now */
-    LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+    LWIP_ASSERT("pbuf_remove_header failed\r\n", 0);
     goto bad;
   }
 
@@ -638,13 +638,13 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
     np = pbuf_alloc(PBUF_RAW, n0->len + cs->cs_hlen, PBUF_POOL);
 #endif /* IP_FORWARD */
     if(!np) {
-      PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: realign failed\n"));
+      PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: realign failed\r\n"));
       goto bad;
     }
 
     if (pbuf_remove_header(np, cs->cs_hlen)) {
       /* Can we cope with this failing?  Just assert for now */
-      LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+      LWIP_ASSERT("pbuf_remove_header failed\r\n", 0);
       goto bad;
     }
 
@@ -664,7 +664,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
     LWIP_ASSERT("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE", cs->cs_hlen <= PBUF_POOL_BUFSIZE);
     np = pbuf_alloc(PBUF_RAW, cs->cs_hlen, PBUF_POOL);
     if(!np) {
-      PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: prepend failed\n"));
+      PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: prepend failed\r\n"));
       goto bad;
     }
     pbuf_cat(np, n0);

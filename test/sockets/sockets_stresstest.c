@@ -130,7 +130,7 @@ check_test_data(const void *buf, size_t buf_len_bytes)
   LWIP_ASSERT("len too short", len_rx >= 4);
   if (len_rx > buf_len_bytes) {
     /* not all data received in this segment */
-    LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("check-\n"));
+    LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("check-\r\n"));
     return buf_len_bytes;
   }
   chk_rx = (((u16_t)p[2]) << 8) | p[3];
@@ -161,7 +161,7 @@ recv_and_check_data_return_offset(int s, char *rxbuf, size_t rxbufsize, size_t r
     return rxoff;
   }
   *closed = 0;
-  LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("%s %d rx %d\n", dbg, s, (int)ret));
+  LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("%s %d rx %d\r\n", dbg, s, (int)ret));
   if (ret == -1) {
     /* TODO: for this to work, 'errno' has to support multithreading... */
     int err = errno;
@@ -486,7 +486,7 @@ sockets_stresstest_conn_client(void *arg)
       /* timeout, send some */
       size_t send_len = (LWIP_RAND() % (sizeof(txbuf) - 4)) + 4;
       fill_test_data(txbuf, send_len);
-      LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("cli %d tx %d\n", s, (int)send_len));
+      LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("cli %d tx %d\r\n", s, (int)send_len));
       ret = lwip_write(s, txbuf, send_len);
       if (ret == -1) {
         /* TODO: for this to work, 'errno' has to support multithreading... */
@@ -536,7 +536,7 @@ sockets_stresstest_conn_server(void *arg)
       /* timeout, send some */
       size_t send_len = (LWIP_RAND() % (sizeof(txbuf) - 4)) + 4;
       fill_test_data(txbuf, send_len);
-      LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("srv %d tx %d\n", s, (int)send_len));
+      LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("srv %d tx %d\r\n", s, (int)send_len));
       ret = lwip_write(s, txbuf, send_len);
       if (ret == -1) {
         /* TODO: for this to work, 'errno' has to support multithreading... */
@@ -618,7 +618,7 @@ sockets_stresstest_listener(void *arg)
     /* using server select */
 #endif
   }
-  LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_STATE, ("sockets_stresstest_listener: all %d connections established\n", num_clients));
+  LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_STATE, ("sockets_stresstest_listener: all %d connections established\r\n", num_clients));
 
   /* accepted all clients */
   while (sockets_stresstest_numthreads > 0) {
@@ -628,7 +628,7 @@ sockets_stresstest_listener(void *arg)
   ret = lwip_close(slisten);
   LWIP_ASSERT("ret == 0", ret == 0);
 
-  LWIP_DEBUGF(TEST_SOCKETS_STRESS |LWIP_DBG_STATE, ("sockets_stresstest_listener: done\n"));
+  LWIP_DEBUGF(TEST_SOCKETS_STRESS |LWIP_DBG_STATE, ("sockets_stresstest_listener: done\r\n"));
 }
 
 static void
@@ -639,14 +639,14 @@ sockets_stresstest_listener_loop(void *arg)
 
   if (settings->loop_cnt) {
     for (i = 0; i < settings->loop_cnt; i++) {
-      LWIP_DEBUGF(TEST_SOCKETS_STRESS |LWIP_DBG_STATE, ("sockets_stresstest_listener_loop: iteration %d\n", i));
+      LWIP_DEBUGF(TEST_SOCKETS_STRESS |LWIP_DBG_STATE, ("sockets_stresstest_listener_loop: iteration %d\r\n", i));
       sockets_stresstest_listener(arg);
       sys_msleep(2);
     }
-    LWIP_DEBUGF(TEST_SOCKETS_STRESS |LWIP_DBG_STATE, ("sockets_stresstest_listener_loop: done\n"));
+    LWIP_DEBUGF(TEST_SOCKETS_STRESS |LWIP_DBG_STATE, ("sockets_stresstest_listener_loop: done\r\n"));
   } else {
     for (i = 0; ; i++) {
-      LWIP_DEBUGF(TEST_SOCKETS_STRESS |LWIP_DBG_STATE, ("sockets_stresstest_listener_loop: iteration %d\n", i));
+      LWIP_DEBUGF(TEST_SOCKETS_STRESS |LWIP_DBG_STATE, ("sockets_stresstest_listener_loop: iteration %d\r\n", i));
       sockets_stresstest_listener(arg);
       sys_msleep(2);
     }

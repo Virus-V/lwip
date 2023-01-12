@@ -145,7 +145,7 @@ snmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
       *uint_ptr = 0; /* not supported */
       break;
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("snmp_get_value(): unknown id: %"S32_F"\n", node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("snmp_get_value(): unknown id: %"S32_F"\r\n", node->oid));
       return 0;
   }
 

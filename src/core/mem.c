@@ -620,12 +620,12 @@ mem_free(void *rmem)
   LWIP_MEM_FREE_DECL_PROTECT();
 
   if (rmem == NULL) {
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("mem_free(p == NULL) was called.\n"));
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("mem_free(p == NULL) was called.\r\n"));
     return;
   }
   if ((((mem_ptr_t)rmem) & (MEM_ALIGNMENT - 1)) != 0) {
     LWIP_MEM_ILLEGAL_FREE("mem_free: sanity check alignment");
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: sanity check alignment\n"));
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: sanity check alignment\r\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return;
@@ -637,7 +637,7 @@ mem_free(void *rmem)
 
   if ((u8_t *)mem < ram || (u8_t *)rmem + MIN_SIZE_ALIGNED > (u8_t *)ram_end) {
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory");
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory\n"));
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory\r\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return;
@@ -651,7 +651,7 @@ mem_free(void *rmem)
   if (!mem->used) {
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory: double free");
     LWIP_MEM_FREE_UNPROTECT();
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: double free?\n"));
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: double free?\r\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return;
@@ -660,7 +660,7 @@ mem_free(void *rmem)
   if (!mem_link_valid(mem)) {
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory: non-linked: double free");
     LWIP_MEM_FREE_UNPROTECT();
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: non-linked: double free?\n"));
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: non-linked: double free?\r\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return;
@@ -722,7 +722,7 @@ mem_trim(void *rmem, mem_size_t new_size)
               (u8_t *)rmem < (u8_t *)ram_end);
 
   if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_trim: illegal memory\n"));
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_trim: illegal memory\r\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
     return rmem;
@@ -971,7 +971,7 @@ mem_malloc_adjust_lfree:
   MEM_STATS_INC(err);
   LWIP_MEM_ALLOC_UNPROTECT();
   sys_mutex_unlock(&mem_mutex);
-  LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_malloc: could not allocate %"S16_F" bytes\n", (s16_t)size));
+  LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_malloc: could not allocate %"S16_F" bytes\r\n", (s16_t)size));
   return NULL;
 }
 
@@ -1002,7 +1002,7 @@ mem_calloc(mem_size_t count, mem_size_t size)
   size_t alloc_size = (size_t)count * (size_t)size;
 
   if ((size_t)(mem_size_t)alloc_size != alloc_size) {
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_calloc: could not allocate %"SZT_F" bytes\n", alloc_size));
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_calloc: could not allocate %"SZT_F" bytes\r\n", alloc_size));
     return NULL;
   }
 

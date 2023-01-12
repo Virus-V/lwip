@@ -293,7 +293,7 @@ do_memp_malloc_pool_fn(const struct memp_desc *desc, const char *file, const int
     desc->stats->err++;
 #endif
     SYS_ARCH_UNPROTECT(old_level);
-    LWIP_DEBUGF(MEMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("memp_malloc: out of memory in pool %s\n", desc->desc));
+    LWIP_DEBUGF(MEMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("memp_malloc: out of memory in pool %s\r\n", desc->desc));
   }
 
   return NULL;

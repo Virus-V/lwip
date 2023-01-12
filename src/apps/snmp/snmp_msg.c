@@ -487,7 +487,7 @@ snmp_process_get_request(struct snmp_request *request)
   struct snmp_varbind vb;
   vb.value = request->value_buffer;
 
-  LWIP_DEBUGF(SNMP_DEBUG, ("SNMP get request\n"));
+  LWIP_DEBUGF(SNMP_DEBUG, ("SNMP get request\r\n"));
 
   while (request->error_status == SNMP_ERR_NOERROR) {
     err = snmp_vb_enumerator_get_next(&request->inbound_varbind_enumerator, &vb);
@@ -523,7 +523,7 @@ snmp_process_getnext_request(struct snmp_request *request)
   struct snmp_varbind vb;
   vb.value = request->value_buffer;
 
-  LWIP_DEBUGF(SNMP_DEBUG, ("SNMP get-next request\n"));
+  LWIP_DEBUGF(SNMP_DEBUG, ("SNMP get-next request\r\n"));
 
   while (request->error_status == SNMP_ERR_NOERROR) {
     err = snmp_vb_enumerator_get_next(&request->inbound_varbind_enumerator, &vb);
@@ -569,7 +569,7 @@ snmp_process_getbulk_request(struct snmp_request *request)
     repetitions = request->max_repetitions;
   }
 
-  LWIP_DEBUGF(SNMP_DEBUG, ("SNMP get-bulk request\n"));
+  LWIP_DEBUGF(SNMP_DEBUG, ("SNMP get-bulk request\r\n"));
 
   /* process non repeaters and first repetition */
   while (request->error_status == SNMP_ERR_NOERROR) {
@@ -657,7 +657,7 @@ snmp_process_set_request(struct snmp_request *request)
   struct snmp_varbind vb;
   vb.value = request->value_buffer;
 
-  LWIP_DEBUGF(SNMP_DEBUG, ("SNMP set request\n"));
+  LWIP_DEBUGF(SNMP_DEBUG, ("SNMP set request\r\n"));
 
   /* perform set test on all objects */
   while (request->error_status == SNMP_ERR_NOERROR) {
@@ -733,7 +733,7 @@ snmp_process_set_request(struct snmp_request *request)
 
 #define PARSE_EXEC(code, retValue) \
   if ((code) != ERR_OK) { \
-    LWIP_DEBUGF(SNMP_DEBUG, ("Malformed ASN.1 detected.\n")); \
+    LWIP_DEBUGF(SNMP_DEBUG, ("Malformed ASN.1 detected.\r\n")); \
     snmp_stats.inasnparseerrs++; \
     return retValue; \
   }
@@ -1656,7 +1656,7 @@ snmp_complete_outbound_frame(struct snmp_request *request)
 
     if (request->error_status >= SNMP_VARBIND_EXCEPTION_OFFSET) {
       /* should never occur because v2 frames store exceptions directly inside varbinds and not as frame error_status */
-      LWIP_DEBUGF(SNMP_DEBUG, ("snmp_complete_outbound_frame() > Found v2 request with varbind exception code stored as error status!\n"));
+      LWIP_DEBUGF(SNMP_DEBUG, ("snmp_complete_outbound_frame() > Found v2 request with varbind exception code stored as error status!\r\n"));
       return ERR_ARG;
     }
   }

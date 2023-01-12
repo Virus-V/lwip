@@ -110,7 +110,7 @@ close_handle(void)
   if (tftp_state.handle) {
     tftp_state.ctx->close(tftp_state.handle);
     tftp_state.handle = NULL;
-    LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, ("tftp: closing\n"));
+    LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, ("tftp: closing\r\n"));
   }
 }
 
@@ -263,7 +263,7 @@ recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16
 
       LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, ("tftp: %s request from ", (opcode == PP_HTONS(TFTP_WRQ)) ? "write" : "read"));
       ip_addr_debug_print(TFTP_DEBUG | LWIP_DBG_STATE, addr);
-      LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, (" for '%s' mode '%s'\n", filename, mode));
+      LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, (" for '%s' mode '%s'\r\n", filename, mode));
 
       ip_addr_copy(tftp_state.addr, *addr);
       tftp_state.port = port;
@@ -378,11 +378,11 @@ tftp_tmr(void *arg)
 
   if ((tftp_state.timer - tftp_state.last_pkt) > (TFTP_TIMEOUT_MSECS / TFTP_TIMER_MSECS)) {
     if ((tftp_state.last_data != NULL) && (tftp_state.retries < TFTP_MAX_RETRIES)) {
-      LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, ("tftp: timeout, retrying\n"));
+      LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, ("tftp: timeout, retrying\r\n"));
       resend_data();
       tftp_state.retries++;
     } else {
-      LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, ("tftp: timeout\n"));
+      LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, ("tftp: timeout\r\n"));
       close_handle();
     }
   }

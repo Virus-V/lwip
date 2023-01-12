@@ -36,14 +36,14 @@
 /**
  * @defgroup snmp SNMPv2c/v3 agent
  * @ingroup apps
- * SNMPv2c and SNMPv3 compatible agent\n
+ * SNMPv2c and SNMPv3 compatible agent\r\n
  * There is also a MIB compiler and a MIB viewer in lwIP contrib repository
- * (lwip-contrib/apps/LwipMibCompiler).\n
+ * (lwip-contrib/apps/LwipMibCompiler).\r\n
  * The agent implements the most important MIB2 MIBs including IPv6 support
  * (interfaces, UDP, TCP, SNMP, ICMP, SYSTEM). IP MIB is an older version
- * without IPv6 statistics (TODO).\n
+ * without IPv6 statistics (TODO).\r\n
  * Rewritten by Martin Hentschel <info@cl-soft.de> and
- * Dirk Ziegelmeier <dziegel@gmx.de>\n
+ * Dirk Ziegelmeier <dziegel@gmx.de>\r\n
  *
  * 0 Agent Capabilities
  * ====================
@@ -794,10 +794,10 @@ snmp_get_node_instance_from_oid(const u32_t *oid, u8_t oid_len, struct snmp_node
 #ifdef LWIP_DEBUG
       if (result == SNMP_ERR_NOERROR) {
         if (((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_READ) != 0) && (node_instance->get_value == NULL)) {
-          LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is readable but no get_value function is specified\n"));
+          LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is readable but no get_value function is specified\r\n"));
         }
         if (((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_WRITE) != 0) && (node_instance->set_value == NULL)) {
-          LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is writable but no set_value and/or set_test function is specified\n"));
+          LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is writable but no set_value and/or set_test function is specified\r\n"));
         }
       }
 #endif
@@ -868,10 +868,10 @@ snmp_get_next_node_instance_from_oid(const u32_t *oid, u8_t oid_len, snmp_valida
       if (result == SNMP_ERR_NOERROR) {
 #ifdef LWIP_DEBUG
         if (((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_READ) != 0) && (node_instance->get_value == NULL)) {
-          LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is readable but no get_value function is specified\n"));
+          LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is readable but no get_value function is specified\r\n"));
         }
         if (((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_WRITE) != 0) && (node_instance->set_value == NULL)) {
-          LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is writable but no set_value function is specified\n"));
+          LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is writable but no set_value function is specified\r\n"));
         }
 #endif
 

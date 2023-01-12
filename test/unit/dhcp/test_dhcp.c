@@ -153,7 +153,7 @@ static void send_pkt(struct netif *netif, const u8_t *data, size_t len)
     for (i = 0; i < len; i++) {
       printf(" %02X", data[i]);
     }
-    printf("\n");
+    printf("\r\n");
   }
 
   fail_unless(p != NULL);
@@ -256,7 +256,7 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
         pp = pp->next;
       }
     } while (pp->next);
-    printf("\n");
+    printf("\r\n");
   }
 
   switch (tcase) {

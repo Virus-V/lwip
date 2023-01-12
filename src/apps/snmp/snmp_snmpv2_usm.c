@@ -322,7 +322,7 @@ static s16_t usmusertable_get_value(struct snmp_node_instance *cell_instance, vo
       *(s32_t *)value = 1; /* active */
       return sizeof(s32_t);
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("usmusertable_get_value(): unknown id: %"S32_F"\n", SNMP_TABLE_GET_COLUMN_FROM_OID(cell_instance->instance_oid.id)));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("usmusertable_get_value(): unknown id: %"S32_F"\r\n", SNMP_TABLE_GET_COLUMN_FROM_OID(cell_instance->instance_oid.id)));
       return 0;
   }
 }
@@ -351,7 +351,7 @@ static s16_t usmstats_scalars_get_value(const struct snmp_scalar_array_node_def 
       *uint_ptr = snmp_stats.decryptionerrors;
       break;
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("usmstats_scalars_get_value(): unknown id: %"S32_F"\n", node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("usmstats_scalars_get_value(): unknown id: %"S32_F"\r\n", node->oid));
       return 0;
   }
 

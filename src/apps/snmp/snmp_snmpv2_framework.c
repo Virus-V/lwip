@@ -60,7 +60,7 @@ static s16_t snmpengine_scalars_get_value(const struct snmp_scalar_array_node_de
       *(s32_t *)value = SNMP_FRAMEWORKMIB_SNMPENGINEMAXMESSAGESIZE;
       return sizeof(s32_t);
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("snmpengine_scalars_get_value(): unknown id: %"S32_F"\n", node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("snmpengine_scalars_get_value(): unknown id: %"S32_F"\r\n", node->oid));
       return 0;
   }
 }

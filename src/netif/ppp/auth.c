@@ -454,10 +454,10 @@ setupapfile(argv)
 
     /* get rid of newlines */
     l = strlen(u);
-    if (l > 0 && u[l-1] == '\n')
+    if (l > 0 && u[l-1] == '\r\n')
 	u[l-1] = 0;
     l = strlen(p);
-    if (l > 0 && p[l-1] == '\n')
+    if (l > 0 && p[l-1] == '\r\n')
 	p[l-1] = 0;
 
     if (override_value("user", option_priority, fname)) {

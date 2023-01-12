@@ -399,11 +399,11 @@ demand_rexmit(proto, newip)
 		/* Log Packet */
 		strcpy(ipstr,inet_ntoa(*( (struct in_addr *) (pkt->data+16))));
 		if (pkt->data[13] == 1) {
-		    syslog(LOG_INFO,"Open ICMP %s -> %s\n",
+		    syslog(LOG_INFO,"Open ICMP %s -> %s\r\n",
 			ipstr,
 			inet_ntoa(*( (struct in_addr *) (pkt->data+20))));
 		} else {
-		    syslog(LOG_INFO,"Open %s %s:%d -> %s:%d\n",
+		    syslog(LOG_INFO,"Open %s %s:%d -> %s:%d\r\n",
 			pkt->data[13] == 6 ? "TCP" : "UDP",
 			ipstr,
 			ntohs(*( (short *) (pkt->data+iphdr+4))),

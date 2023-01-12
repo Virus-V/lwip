@@ -428,7 +428,7 @@ httpc_get_internal_addr(httpc_state_t* req, const ip_addr_t *ipaddr)
   if (err == ERR_OK) {
     return ERR_OK;
   }
-  LWIP_DEBUGF(HTTPC_DEBUG_WARN_STATE, ("tcp_connect failed: %d\n", (int)err));
+  LWIP_DEBUGF(HTTPC_DEBUG_WARN_STATE, ("tcp_connect failed: %d\r\n", (int)err));
   return err;
 }
 
@@ -452,7 +452,7 @@ httpc_dns_found(const char* hostname, const ip_addr_t *ipaddr, void *arg)
     }
     result = HTTPC_RESULT_ERR_CONNECT;
   } else {
-    LWIP_DEBUGF(HTTPC_DEBUG_WARN_STATE, ("httpc_dns_found: failed to resolve hostname: %s\n",
+    LWIP_DEBUGF(HTTPC_DEBUG_WARN_STATE, ("httpc_dns_found: failed to resolve hostname: %s\r\n",
       hostname));
     result = HTTPC_RESULT_ERR_HOSTNAME;
     err = ERR_ARG;

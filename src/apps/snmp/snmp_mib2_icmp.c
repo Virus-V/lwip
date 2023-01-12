@@ -140,7 +140,7 @@ icmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
       *uint_ptr = 0;
       return sizeof(*uint_ptr);
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("icmp_get_value(): unknown id: %"S32_F"\n", node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("icmp_get_value(): unknown id: %"S32_F"\r\n", node->oid));
       break;
   }
 

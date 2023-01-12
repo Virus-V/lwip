@@ -198,7 +198,7 @@ sys_timeout_abs(u32_t abs_time, sys_timeout_handler handler, void *arg)
 
 #if LWIP_DEBUG_TIMERNAMES
   timeout->handler_name = handler_name;
-  LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p abs_time=%"U32_F" handler=%s arg=%p\n",
+  LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p abs_time=%"U32_F" handler=%s arg=%p\r\n",
                              (void *)timeout, abs_time, handler_name, (void *)arg));
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
@@ -236,7 +236,7 @@ lwip_cyclic_timer(void *arg)
   const struct lwip_cyclic_timer *cyclic = (const struct lwip_cyclic_timer *)arg;
 
 #if LWIP_DEBUG_TIMERNAMES
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: %s()\n", cyclic->handler_name));
+  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: %s()\r\n", cyclic->handler_name));
 #endif
   cyclic->handler();
 
@@ -381,7 +381,7 @@ sys_check_timeouts(void)
     current_timeout_due_time = tmptimeout->time;
 #if LWIP_DEBUG_TIMERNAMES
     if (handler != NULL) {
-      LWIP_DEBUGF(TIMERS_DEBUG, ("sct calling h=%s t=%"U32_F" arg=%p\n",
+      LWIP_DEBUGF(TIMERS_DEBUG, ("sct calling h=%s t=%"U32_F" arg=%p\r\n",
                                  tmptimeout->handler_name, sys_now() - tmptimeout->time, arg));
     }
 #endif /* LWIP_DEBUG_TIMERNAMES */

@@ -136,7 +136,7 @@ tcp_get_value(struct snmp_node_instance *instance, void *value)
     return sizeof(u64_t);
 #endif
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("tcp_get_value(): unknown id: %"S32_F"\n", instance->node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("tcp_get_value(): unknown id: %"S32_F"\r\n", instance->node->oid));
       break;
   }
 

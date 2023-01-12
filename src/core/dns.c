@@ -326,7 +326,7 @@ dns_init(void)
   LWIP_ASSERT("sanity check SIZEOF_DNS_ANSWER",
               sizeof(struct dns_answer) <= SIZEOF_DNS_ANSWER_ASSERT);
 
-  LWIP_DEBUGF(DNS_DEBUG, ("dns_init: initializing\n"));
+  LWIP_DEBUGF(DNS_DEBUG, ("dns_init: initializing\r\n"));
 
   /* if dns client not yet initialized... */
 #if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_SRC_PORT) == 0)
@@ -394,7 +394,7 @@ dns_getserver(u8_t numdns)
 void
 dns_tmr(void)
 {
-  LWIP_DEBUGF(DNS_DEBUG, ("dns_tmr: dns_check_entries\n"));
+  LWIP_DEBUGF(DNS_DEBUG, ("dns_tmr: dns_check_entries\r\n"));
   dns_check_entries();
 }
 
@@ -620,7 +620,7 @@ dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_t dns_addr
         LWIP_DNS_ADDRTYPE_MATCH_IP(dns_addrtype, dns_table[i].ipaddr)) {
       LWIP_DEBUGF(DNS_DEBUG, ("dns_lookup: \"%s\": found = ", name));
       ip_addr_debug_print_val(DNS_DEBUG, dns_table[i].ipaddr);
-      LWIP_DEBUGF(DNS_DEBUG, ("\n"));
+      LWIP_DEBUGF(DNS_DEBUG, ("\r\n"));
       if (addr) {
         ip_addr_copy(*addr, dns_table[i].ipaddr);
       }
@@ -757,7 +757,7 @@ dns_send(u8_t idx)
   u8_t pcb_idx;
   struct dns_table_entry *entry = &dns_table[idx];
 
-  LWIP_DEBUGF(DNS_DEBUG, ("dns_send: dns_servers[%"U16_F"] \"%s\": request\n",
+  LWIP_DEBUGF(DNS_DEBUG, ("dns_send: dns_servers[%"U16_F"] \"%s\": request\r\n",
                           (u16_t)(entry->server_idx), entry->name));
   LWIP_ASSERT("dns server out of array", entry->server_idx < DNS_MAX_SERVERS);
   if (ip_addr_isany_val(dns_servers[entry->server_idx])
@@ -1064,7 +1064,7 @@ dns_check_entry(u8_t i)
       err = dns_send(i);
       if (err != ERR_OK) {
         LWIP_DEBUGF(DNS_DEBUG | LWIP_DBG_LEVEL_WARNING,
-                    ("dns_send returned error: %s\n", lwip_strerr(err)));
+                    ("dns_send returned error: %s\r\n", lwip_strerr(err)));
       }
       break;
     case DNS_STATE_ASKING:
@@ -1080,7 +1080,7 @@ dns_check_entry(u8_t i)
             entry->tmr = 1;
             entry->retries = 0;
           } else {
-            LWIP_DEBUGF(DNS_DEBUG, ("dns_check_entry: \"%s\": timeout\n", entry->name));
+            LWIP_DEBUGF(DNS_DEBUG, ("dns_check_entry: \"%s\": timeout\r\n", entry->name));
             /* call specified callback function if provided */
             dns_call_found(i, NULL);
             /* flush this entry */
@@ -1096,14 +1096,14 @@ dns_check_entry(u8_t i)
         err = dns_send(i);
         if (err != ERR_OK) {
           LWIP_DEBUGF(DNS_DEBUG | LWIP_DBG_LEVEL_WARNING,
-                      ("dns_send returned error: %s\n", lwip_strerr(err)));
+                      ("dns_send returned error: %s\r\n", lwip_strerr(err)));
         }
       }
       break;
     case DNS_STATE_DONE:
       /* if the time to live is nul */
       if ((entry->ttl == 0) || (--entry->ttl == 0)) {
-        LWIP_DEBUGF(DNS_DEBUG, ("dns_check_entry: \"%s\": flush\n", entry->name));
+        LWIP_DEBUGF(DNS_DEBUG, ("dns_check_entry: \"%s\": flush\r\n", entry->name));
         /* flush this entry, there cannot be any related pending entries in this state */
         entry->state = DNS_STATE_UNUSED;
       }
@@ -1142,7 +1142,7 @@ dns_correct_response(u8_t idx, u32_t ttl)
 
   LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", entry->name));
   ip_addr_debug_print_val(DNS_DEBUG, entry->ipaddr);
-  LWIP_DEBUGF(DNS_DEBUG, ("\n"));
+  LWIP_DEBUGF(DNS_DEBUG, ("\r\n"));
 
   /* read the answer resource record's TTL, and maximize it if needed */
   entry->ttl = ttl;
@@ -1183,7 +1183,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
 
   /* is the dns message big enough ? */
   if (p->tot_len < (SIZEOF_DNS_HDR + SIZEOF_DNS_QUERY)) {
-    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf too small\n"));
+    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf too small\r\n"));
     /* free pbuf and return */
     goto ignore_packet;
   }
@@ -1204,11 +1204,11 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
 
         /* Check for correct response. */
         if ((hdr.flags1 & DNS_FLAG1_RESPONSE) == 0) {
-          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": not a response\n", entry->name));
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": not a response\r\n", entry->name));
           goto ignore_packet; /* ignore this packet */
         }
         if (nquestions != 1) {
-          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\r\n", entry->name));
           goto ignore_packet; /* ignore this packet */
         }
 
@@ -1227,7 +1227,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
            skip it if equal. */
         res_idx = dns_compare_name(entry->name, p, SIZEOF_DNS_HDR);
         if (res_idx == 0xFFFF) {
-          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\r\n", entry->name));
           goto ignore_packet; /* ignore this packet */
         }
 
@@ -1238,7 +1238,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
         if ((qry.cls != PP_HTONS(DNS_RRCLASS_IN)) ||
             (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_AAAA))) ||
             (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_A)))) {
-          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\r\n", entry->name));
           goto ignore_packet; /* ignore this packet */
         }
         /* skip the rest of the "question" part */
@@ -1249,7 +1249,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
 
         /* Check for error. If so, call callback to inform. */
         if (hdr.flags2 & DNS_FLAG2_ERR_MASK) {
-          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", entry->name));
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\r\n", entry->name));
 
           /* if there is another backup DNS server to try
            * then don't stop the DNS request
@@ -1345,7 +1345,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
             return;
           }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
-          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in response\n", entry->name));
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in response\r\n", entry->name));
         }
         /* call callback to indicate error, clean up memory and return */
         pbuf_free(p);
@@ -1402,7 +1402,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
           dns_requests[r].arg = callback_arg;
           dns_requests[r].dns_table_idx = i;
           LWIP_DNS_SET_ADDRTYPE(dns_requests[r].reqaddrtype, dns_addrtype);
-          LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": duplicate request\n", name));
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": duplicate request\r\n", name));
           return ERR_INPROGRESS;
         }
       }
@@ -1434,7 +1434,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
   if (i == DNS_TABLE_SIZE) {
     if ((lseqi >= DNS_TABLE_SIZE) || (dns_table[lseqi].state != DNS_STATE_DONE)) {
       /* no entry can be used now, table is full */
-      LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": DNS entries table is full\n", name));
+      LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": DNS entries table is full\r\n", name));
       return ERR_MEM;
     } else {
       /* use the oldest completed one */
@@ -1454,7 +1454,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
   }
   if (req == NULL) {
     /* no request entry can be used now, table is full */
-    LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": DNS request entries table is full\n", name));
+    LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": DNS request entries table is full\r\n", name));
     return ERR_MEM;
   }
   req->dns_table_idx = i;
@@ -1464,7 +1464,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
 #endif
 
   /* use this entry */
-  LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": use DNS entry %"U16_F"\n", name, (u16_t)(i)));
+  LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": use DNS entry %"U16_F"\r\n", name, (u16_t)(i)));
 
   /* fill the entry */
   entry->state = DNS_STATE_NEW;
@@ -1481,12 +1481,12 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
   entry->pcb_idx = dns_alloc_pcb();
   if (entry->pcb_idx >= DNS_MAX_SOURCE_PORTS) {
     /* failed to get a UDP pcb */
-    LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": failed to allocate a pcb\n", name));
+    LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": failed to allocate a pcb\r\n", name));
     entry->state = DNS_STATE_UNUSED;
     req->found = NULL;
     return ERR_MEM;
   }
-  LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": use DNS pcb %"U16_F"\n", name, (u16_t)(entry->pcb_idx)));
+  LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": use DNS pcb %"U16_F"\r\n", name, (u16_t)(entry->pcb_idx)));
 #endif
 
 #if LWIP_DNS_SUPPORT_MDNS_QUERIES

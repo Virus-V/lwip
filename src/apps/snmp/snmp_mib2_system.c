@@ -262,7 +262,7 @@ system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
       *(s32_t *)value = SNMP_SYSSERVICES;
       return sizeof(s32_t);
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("system_get_value(): unknown id: %"S32_F"\n", node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("system_get_value(): unknown id: %"S32_F"\r\n", node->oid));
       return 0;
   }
 
@@ -300,7 +300,7 @@ system_set_test(const struct snmp_scalar_array_node_def *node, u16_t len, void *
       var_wr_len   = syslocation_wr_len;
       break;
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("system_set_test(): unknown id: %"S32_F"\n", node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("system_set_test(): unknown id: %"S32_F"\r\n", node->oid));
       return ret;
   }
 
@@ -343,7 +343,7 @@ system_set_value(const struct snmp_scalar_array_node_def *node, u16_t len, void 
       var_wr_len = syslocation_wr_len;
       break;
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("system_set_value(): unknown id: %"S32_F"\n", node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("system_set_value(): unknown id: %"S32_F"\r\n", node->oid));
       return SNMP_ERR_GENERROR;
   }
 

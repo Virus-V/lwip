@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
       if (strstr(argv[i], "-svr:") == argv[i]) {
         snprintf(serverIDBuffer, sizeof(serverIDBuffer), "Server: %s\r\n", &argv[i][5]);
         serverID = serverIDBuffer;
-        printf("Using Server-ID: \"%s\"\n", serverID);
+        printf("Using Server-ID: \"%s\"\r\n", serverID);
       } else if (!strcmp(argv[i], "-s")) {
         processSubs = 0;
       } else if (!strcmp(argv[i], "-e")) {
@@ -217,16 +217,16 @@ int main(int argc, char *argv[])
       } else if (strstr(argv[i], "-ssi:") == argv[i]) {
         const char* ssi_list_filename = &argv[i][5];
         if (checkSsiByFilelist(ssi_list_filename)) {
-          printf("Reading list of SSI files from \"%s\"\n", ssi_list_filename);
+          printf("Reading list of SSI files from \"%s\"\r\n", ssi_list_filename);
         } else {
-          printf("Failed to load list of SSI files from \"%s\"\n", ssi_list_filename);
+          printf("Failed to load list of SSI files from \"%s\"\r\n", ssi_list_filename);
         }
       } else if (!strcmp(argv[i], "-c")) {
         precalcChksum = 1;
       } else if (strstr(argv[i], "-f:") == argv[i]) {
         strncpy(targetfile, &argv[i][3], sizeof(targetfile) - 1);
         targetfile[sizeof(targetfile) - 1] = 0;
-        printf("Writing to file \"%s\"\n", targetfile);
+        printf("Writing to file \"%s\"\r\n", targetfile);
       } else if (!strcmp(argv[i], "-m")) {
         includeLastModified = 1;
       } else if (!strcmp(argv[i], "-defl")) {
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
         deflateNonSsiFiles = 1;
         printf("Deflating all non-SSI files with level %d (but only if size is reduced)" NEWLINE, deflate_level);
 #else
-        printf("WARNING: Deflate support is disabled\n");
+        printf("WARNING: Deflate support is disabled\r\n");
 #endif
       } else if (strstr(argv[i], "-x:") == argv[i]) {
         exclude_list = &argv[i][3];
@@ -296,12 +296,12 @@ int main(int argc, char *argv[])
 
   data_file = fopen("fsdata.tmp", "wb");
   if (data_file == NULL) {
-    printf("Failed to create file \"fsdata.tmp\"\n");
+    printf("Failed to create file \"fsdata.tmp\"\r\n");
     exit(-1);
   }
   struct_file = fopen("fshdr.tmp", "wb");
   if (struct_file == NULL) {
-    printf("Failed to create file \"fshdr.tmp\"\n");
+    printf("Failed to create file \"fshdr.tmp\"\r\n");
     fclose(data_file);
     exit(-1);
   }
@@ -347,10 +347,10 @@ int main(int argc, char *argv[])
 
   /* if succeeded, delete the temporary files */
   if (remove("fsdata.tmp") != 0) {
-    printf("Warning: failed to delete fsdata.tmp\n");
+    printf("Warning: failed to delete fsdata.tmp\r\n");
   }
   if (remove("fshdr.tmp") != 0) {
-    printf("Warning: failed to delete fshdr.tmp\n");
+    printf("Warning: failed to delete fshdr.tmp\r\n");
   }
 
   printf(NEWLINE "Processed %d files - done." NEWLINE, filesProcessed);
@@ -408,7 +408,7 @@ static void copy_file(const char *filename_in, FILE *fout)
   void *buf;
   fin = fopen(filename_in, "rb");
   if (fin == NULL) {
-    printf("Failed to open file \"%s\"\n", filename_in);
+    printf("Failed to open file \"%s\"\r\n", filename_in);
     exit(-1);
   }
   buf = malloc(COPY_BUFSIZE);
@@ -424,7 +424,7 @@ void concat_files(const char *file1, const char *file2, const char *targetfile)
   FILE *fout;
   fout = fopen(targetfile, "wb");
   if (fout == NULL) {
-    printf("Failed to open file \"%s\"\n", targetfile);
+    printf("Failed to open file \"%s\"\r\n", targetfile);
     exit(-1);
   }
   copy_file(file1, fout);
@@ -478,7 +478,7 @@ int process_sub(FILE *data_file, FILE *struct_file)
             CHDIR("..");
             curSubdir[sublen] = 0;
           } else {
-            printf("WARNING: cannot process sub due to path length restrictions: \"%s/%s\"\n", curSubdir, currName);
+            printf("WARNING: cannot process sub due to path length restrictions: \"%s/%s\"\r\n", curSubdir, currName);
           }
         }
       }
@@ -539,13 +539,13 @@ static u8_t *get_file_data(const char *filename, int *file_size, int can_be_comp
   LWIP_UNUSED_ARG(r); /* for LWIP_NOASSERT */
   inFile = fopen(filename, "rb");
   if (inFile == NULL) {
-    printf("Failed to open file \"%s\"\n", filename);
+    printf("Failed to open file \"%s\"\r\n", filename);
     exit(-1);
   }
   fseek(inFile, 0, SEEK_END);
   rs = ftell(inFile);
   if (rs < 0) {
-    printf("ftell failed with %d\n", errno);
+    printf("ftell failed with %d\r\n", errno);
     exit(-1);
   }
   fsize = (size_t)rs;
@@ -574,13 +574,13 @@ static u8_t *get_file_data(const char *filename, int *file_size, int can_be_comp
         }
         status = tdefl_init(&g_deflator, NULL, NULL, comp_flags);
         if (status != TDEFL_STATUS_OKAY) {
-          printf("tdefl_init() failed!\n");
+          printf("tdefl_init() failed!\r\n");
           exit(-1);
         }
         memset(s_outbuf, 0, sizeof(s_outbuf));
         status = tdefl_compress(&g_deflator, next_in, &in_bytes, next_out, &out_bytes, TDEFL_FINISH);
         if (status != TDEFL_STATUS_DONE) {
-          printf("deflate failed: %d\n", status);
+          printf("deflate failed: %d\r\n", status);
           exit(-1);
         }
         LWIP_ASSERT("out_bytes <= COPY_BUFSIZE", out_bytes <= OUT_BUF_SIZE);
@@ -709,7 +709,7 @@ static void fix_filename_for_c(char *qualifiedName, size_t max_len)
   int cnt = 0;
   size_t i;
   if (len + 3 == max_len) {
-    printf("File name too long: \"%s\"\n", qualifiedName);
+    printf("File name too long: \"%s\"\r\n", qualifiedName);
     exit(-1);
   }
   strcpy(new_name, qualifiedName);
@@ -731,7 +731,7 @@ static void fix_filename_for_c(char *qualifiedName, size_t max_len)
     }
   } while (!filename_ok && (cnt < 999));
   if (!filename_ok) {
-    printf("Failed to get unique file name: \"%s\"\n", qualifiedName);
+    printf("Failed to get unique file name: \"%s\"\r\n", qualifiedName);
     exit(-1);
   }
   strcpy(qualifiedName, new_name);
@@ -765,7 +765,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     fseek(f, 0, SEEK_END);
     rs = ftell(f);
     if (rs < 0) {
-      printf("ftell failed with %d\n", errno);
+      printf("ftell failed with %d\r\n", errno);
       fclose(f);
       return 0;
     }
@@ -773,7 +773,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     fseek(f, 0, SEEK_SET);
     buf = (char*)malloc(fsize);
     if (!buf) {
-      printf("failed to allocate ssi file buffer\n");
+      printf("failed to allocate ssi file buffer\r\n");
       fclose(f);
       return 0;
     }
@@ -781,7 +781,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     readcount = fread(buf, 1, fsize, f);
     fclose(f);
     if ((readcount > fsize) || !readcount) {
-      printf("failed to read data from ssi file\n");
+      printf("failed to read data from ssi file\r\n");
       free(buf);
       return 0;
     }
@@ -789,7 +789,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     /* first pass: get the number of lines (and convert newlines to '0') */
     num_lines = 1;
     for (i = 0; i < readcount; i++) {
-      if (buf[i] == '\n') {
+      if (buf[i] == '\r\n') {
         num_lines++;
         buf[i] = 0;
       } else if (buf[i] == '\r') {
@@ -799,7 +799,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     /* allocate the line pointer array */
     lines = (char**)malloc(sizeof(char*) * num_lines);
     if (!lines) {
-      printf("failed to allocate ssi line buffer\n");
+      printf("failed to allocate ssi line buffer\r\n");
       free(buf);
       return 0;
     }
@@ -1086,7 +1086,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
     }
   }
   if ((file_ext == NULL) || (*file_ext == 0)) {
-    printf("failed to get extension for file \"%s\", using default.\n", filename);
+    printf("failed to get extension for file \"%s\", using default.\r\n", filename);
     file_type = HTTP_HDR_DEFAULT_TYPE;
   } else {
     file_type = NULL;
@@ -1097,7 +1097,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
       }
     }
     if (file_type == NULL) {
-      printf("failed to get file type for extension \"%s\", using default.\n", file_ext);
+      printf("failed to get file type for extension \"%s\", using default.\r\n", file_ext);
       file_type = HTTP_HDR_DEFAULT_TYPE;
     }
   }
@@ -1137,12 +1137,12 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
     cur_string = modbuf;
     strcpy(modbuf, "Last-Modified: ");
     if (stat(filename, &stat_data) != 0) {
-      printf("stat(%s) failed with error %d\n", filename, errno);
+      printf("stat(%s) failed with error %d\r\n", filename, errno);
       exit(-1);
     }
     t = gmtime(&stat_data.st_mtime);
     if (t == NULL) {
-      printf("gmtime() failed with error %d\n", errno);
+      printf("gmtime() failed with error %d\r\n", errno);
       exit(-1);
     }
     strftime(&modbuf[15], sizeof(modbuf) - 15, "%a, %d %b %Y %H:%M:%S GMT", t);

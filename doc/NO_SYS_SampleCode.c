@@ -43,7 +43,7 @@ netif_output(struct netif *netif, struct pbuf *p)
 static void 
 netif_status_callback(struct netif *netif)
 {
-  printf("netif status changed %s\n", ip4addr_ntoa(netif_ip4_addr(netif)));
+  printf("netif status changed %s\r\n", ip4addr_ntoa(netif_ip4_addr(netif)));
 }
 
 static err_t 

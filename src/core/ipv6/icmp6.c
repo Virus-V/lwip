@@ -394,7 +394,7 @@ icmp6_send_response_with_addrs_and_netif(struct pbuf *p, u8_t code, u32_t data, 
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp6_hdr) + datalen,
                  PBUF_RAM);
   if (q == NULL) {
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMPv6 packet.\n"));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMPv6 packet.\r\n"));
     ICMP6_STATS_INC(icmp6.memerr);
     return;
   }

@@ -575,8 +575,8 @@ typedef u16_t netif_nsc_reason_t;
 #define LWIP_NSC_NETIF_REMOVED            0x0002
 /** link changed */
 #define LWIP_NSC_LINK_CHANGED             0x0004
-/** netif administrative status changed.\n
-  * up is called AFTER netif is set up.\n
+/** netif administrative status changed.\r\n
+  * up is called AFTER netif is set up.\r\n
   * down is called BEFORE the netif is actually set down. */
 #define LWIP_NSC_STATUS_CHANGED           0x0008
 /** IPv4 address has changed */

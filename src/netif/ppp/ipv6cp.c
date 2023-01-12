@@ -1003,7 +1003,7 @@ static int ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 	}
 
 endswitch:
-	IPV6CPDEBUG((" (%s)\n", CODENAME(orc)));
+	IPV6CPDEBUG((" (%s)\r\n", CODENAME(orc)));
 
 	if (orc == CONFACK &&		/* Good CI */
 	    rc != CONFACK)		/*  but prior CI wasnt? */
@@ -1111,7 +1111,7 @@ static void ipv6_check_options() {
     }
 
     if (demand && (eui64_iszero(wo->ourid) || eui64_iszero(wo->hisid))) {
-	option_error("local/remote LL address required for demand-dialling\n");
+	option_error("local/remote LL address required for demand-dialling\r\n");
 	exit(1);
     }
 }

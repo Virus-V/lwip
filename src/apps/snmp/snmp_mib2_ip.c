@@ -136,7 +136,7 @@ ip_get_value(struct snmp_node_instance *instance, void *value)
       *uint_ptr = 0;
       return sizeof(*uint_ptr);
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("ip_get_value(): unknown id: %"S32_F"\n", instance->node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("ip_get_value(): unknown id: %"S32_F"\r\n", instance->node->oid));
       break;
   }
 
@@ -179,7 +179,7 @@ ip_set_test(struct snmp_node_instance *instance, u16_t len, void *value)
       }
       break;
     default:
-      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("ip_set_test(): unknown id: %"S32_F"\n", instance->node->oid));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("ip_set_test(): unknown id: %"S32_F"\r\n", instance->node->oid));
       break;
   }
 
