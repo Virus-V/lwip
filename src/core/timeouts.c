@@ -576,7 +576,7 @@ static bool tcp_slow_timer_calculate_next_wake(u32_t * next_wake_ms)
   while (pcb != NULL) {
     if (pcb->unacked != NULL) {
       /* calculate retransmission timeouts */
-      if ((tcp_ticks - pcb->rtime) < pcb->rto) {
+      if ((tcp_ticks - pcb->rtime) <= pcb->rto) {
         LWIP_DEBUGF(TCP_DEBUG, ("calculate_next_wake: retransmission timeout %ldms\n", (pcb->rto - (tcp_ticks - pcb->rtime)) * TCP_SLOW_INTERVAL));
         min_wake_time = LWIP_MIN((pcb->rto - (tcp_ticks - pcb->rtime)) * TCP_SLOW_INTERVAL, min_wake_time);
       } else {
@@ -638,11 +638,11 @@ static bool tcp_slow_timer_calculate_next_wake(u32_t * next_wake_ms)
   }
 
   if (min_wake_time != LWIP_UINT32_MAX/4) {
-    if (min_wake_time < TCP_SLOW_INTERVAL || min_wake_time > TCP_MAXIDLE) {
+    if (min_wake_time > TCP_MAXIDLE) {
       LWIP_DEBUGF(TCP_DEBUG, ("calculate_next_wake: WARNING! min_wake_time = %ldms, fix to TCP_SLOW_INTERVAL\n", min_wake_time));
       min_wake_time = TCP_SLOW_INTERVAL;
     }
-    LWIP_ASSERT("calculate_next_wake: Invalid min_wake_time!\n", min_wake_time > 0);
+    LWIP_ASSERT("calculate_next_wake: Invalid min_wake_time!\n", min_wake_time >= 0);
 
     LWIP_DEBUGF(TCP_DEBUG, ("calculate_next_wake: min_wake_time = %ldms\n", min_wake_time));
     *next_wake_ms = (u32_t)min_wake_time;
