@@ -73,6 +73,8 @@
 #define TIME_LESS_THAN(t, compare_to) ( (((u32_t)((t)-(compare_to))) > LWIP_MAX_TIMEOUT) ? 1 : 0 )
 
 #if LWIP_TCP
+static char tcpip_slow_timer_pending = 0;
+static char tcpip_fast_timer_pending = 0;
 static void tcpip_tcp_slow_timer(void);
 static void tcpip_tcp_fast_timer(void);
 static bool tcp_slow_timer_calculate_next_wake(u32_t * next_wake_ms);
@@ -173,6 +175,7 @@ tcpip_tcp_slow_timer(void)
 
   /* call TCP timer handler */
   tcp_slowtmr();
+  tcpip_slow_timer_pending = 0;
 
   /* timer still needed? */
   if ((tcp_active_pcbs || tcp_tw_pcbs) && !tcp_slow_timer_calculate_next_wake(&sleep_duration)) {
@@ -196,6 +199,7 @@ tcpip_tcp_fast_timer(void)
 
   /* call TCP timer handler */
   tcp_fasttmr();
+  tcpip_fast_timer_pending = 0;
 
   /* timer still needed? */
   if ((tcp_active_pcbs) && !tcp_fast_timer_calculate_next_wake(&sleep_duration)) {
@@ -214,29 +218,39 @@ tcpip_tcp_fast_timer(void)
  * the reason is to have the TCP timer only running when
  * there are active (or time-wait) PCBs.
  */
-void
-tcp_timer_needed(void)
-{
-  LWIP_ASSERT_CORE_LOCKED();
-  u32_t sleep_duration = 0;
+ void
+ tcp_timer_needed(void)
+ {
+   LWIP_ASSERT_CORE_LOCKED();
+   u32_t sleep_duration = 0;
 
-  sys_untimeout((sys_timeout_handler)tcpip_tcp_fast_timer, NULL);
-  sys_untimeout((sys_timeout_handler)tcpip_tcp_slow_timer, NULL);
-  /* timer is off but needed again? */
-  if ((tcp_active_pcbs) && !tcp_fast_timer_calculate_next_wake(&sleep_duration)) {
-    LWIP_DEBUGF(TCP_DEBUG, ("tcp_timer_needed: start tcp fast timer, next:%dms\n", sleep_duration));
+   /* timer is off but needed again? */
+   if ((tcp_active_pcbs) && !tcp_fast_timer_calculate_next_wake(&sleep_duration)) {
+     LWIP_DEBUGF(TCP_DEBUG, ("tcp_timer_needed: start tcp fast timer, next:%dms\n", sleep_duration));
 
-    /* (re)start timer */
-    sys_timeout(sleep_duration, (sys_timeout_handler)tcpip_tcp_fast_timer, NULL);
-  }
+     if (tcpip_fast_timer_pending == 0) {
+       /* (re)start timer */
+       sys_untimeout((sys_timeout_handler)tcpip_tcp_fast_timer, NULL);
+       sys_timeout(sleep_duration, (sys_timeout_handler)tcpip_tcp_fast_timer, NULL);
+       tcpip_fast_timer_pending = 1;
+     }
+   } else {
+     sys_untimeout((sys_timeout_handler)tcpip_tcp_fast_timer, NULL);
+   }
 
-  if ((tcp_active_pcbs || tcp_tw_pcbs) && !tcp_slow_timer_calculate_next_wake(&sleep_duration)) {
-    LWIP_DEBUGF(TCP_DEBUG, ("tcp_timer_needed: start tcp slow timer, next:%dms\n", sleep_duration));
+   if ((tcp_active_pcbs || tcp_tw_pcbs) && !tcp_slow_timer_calculate_next_wake(&sleep_duration)) {
+     LWIP_DEBUGF(TCP_DEBUG, ("tcp_timer_needed: start tcp slow timer, next:%dms\n", sleep_duration));
 
-    /* (re)start timer */
-    sys_timeout(sleep_duration, (sys_timeout_handler)tcpip_tcp_slow_timer, NULL);
-  }
-}
+     if (tcpip_slow_timer_pending == 0) {
+       /* (re)start timer */
+       sys_untimeout((sys_timeout_handler)tcpip_tcp_slow_timer, NULL);
+       sys_timeout(sleep_duration, (sys_timeout_handler)tcpip_tcp_slow_timer, NULL);
+       tcpip_slow_timer_pending = 1;
+     }
+   } else {
+     sys_untimeout((sys_timeout_handler)tcpip_tcp_slow_timer, NULL);
+   }
+ }
 #endif /* LWIP_TCP */
 
 static void
