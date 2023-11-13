@@ -102,14 +102,14 @@ struct lwip_cyclic_timer lwip_cyclic_timers[] = {
   {LWIP_TIMER_STATUS_RUNNING, DHCP_FINE_TIMER_MSECS, HANDLER(dhcp_fine_tmr)},
 #endif /* LWIP_DHCP */
 #if LWIP_AUTOIP
-  {LWIP_TIMER_STATUS_RUNNING, AUTOIP_TMR_INTERVAL, HANDLER(autoip_tmr)},
+  {LWIP_TIMER_STATUS_IDLE, AUTOIP_TMR_INTERVAL, HANDLER(autoip_tmr)},
 #endif /* LWIP_AUTOIP */
 #if LWIP_IGMP
-  {LWIP_TIMER_STATUS_RUNNING, IGMP_TMR_INTERVAL, HANDLER(igmp_tmr)},
+  {LWIP_TIMER_STATUS_IDLE, IGMP_TMR_INTERVAL, HANDLER(igmp_tmr)},
 #endif /* LWIP_IGMP */
 #endif /* LWIP_IPV4 */
 #if LWIP_DNS
-  {LWIP_TIMER_STATUS_RUNNING, DNS_TMR_INTERVAL, HANDLER(dns_tmr)},
+  {LWIP_TIMER_STATUS_IDLE, DNS_TMR_INTERVAL, HANDLER(dns_tmr)},
 #endif /* LWIP_DNS */
 #if LWIP_IPV6
   {LWIP_TIMER_STATUS_IDLE, ND6_TMR_INTERVAL, HANDLER(nd6_tmr)},
@@ -411,7 +411,7 @@ void sys_timeouts_set_timer_enable(bool enable, lwip_cyclic_timer_handler handle
 {
    size_t i;
 
-  for (i = (LWIP_TCP ? 1 : 0); i < LWIP_ARRAYSIZE(lwip_cyclic_timers); i++) {
+  for (i = (LWIP_TCP ? 2 : 0); i < LWIP_ARRAYSIZE(lwip_cyclic_timers); i++) {
     if (lwip_cyclic_timers[i].handler == handler) {
       if (LWIP_TIMER_STATUS_RUNNING == lwip_cyclic_timers[i].status && !enable)
       {

@@ -92,6 +92,7 @@ Steve Reynolds
 #include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/stats.h"
+#include "lwip/timeouts.h"
 #include "lwip/prot/igmp.h"
 
 #include <string.h>
@@ -107,6 +108,8 @@ static void   igmp_send(struct netif *netif, struct igmp_group *group, u8_t type
 static ip4_addr_t     allsystems;
 static ip4_addr_t     allrouters;
 
+static u32_t g_last_run, g_next_wake;
+
 /**
  * Initialize the IGMP module
  */
@@ -117,6 +120,8 @@ igmp_init(void)
 
   IP4_ADDR(&allsystems, 224, 0, 0, 1);
   IP4_ADDR(&allrouters, 224, 0, 0, 2);
+
+  g_last_run = g_next_wake = sys_now();
 }
 
 /**
@@ -180,6 +185,7 @@ igmp_stop(struct netif *netif)
     /* move to "next" */
     group = next;
   }
+
   return ERR_OK;
 }
 
@@ -424,6 +430,10 @@ igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
         group->timer = 0; /* stopped */
         group->group_state = IGMP_GROUP_IDLE_MEMBER;
         group->last_reporter_flag = 0;
+
+        /* re-schdule igmp timer immediately */
+        sys_untimeout((sys_timeout_handler)igmp_tmr, NULL);
+        sys_timeout(0, (sys_timeout_handler)igmp_tmr, NULL);
       }
       break;
     default:
@@ -641,19 +651,40 @@ void
 igmp_tmr(void)
 {
   struct netif *netif;
+  u32_t time_now = sys_now();
+  int nwake = INT_MAX;
+
+  u32_t timer_diff = (time_now - g_last_run) / IGMP_TMR_INTERVAL;
 
   NETIF_FOREACH(netif) {
     struct igmp_group *group = netif_igmp_data(netif);
 
     while (group != NULL) {
       if (group->timer > 0) {
-        group->timer--;
+        LWIP_ASSERT("igmp_tmr: timer underflow.\r\n", timer_diff <= group->timer);
+        group->timer -= timer_diff;
+
         if (group->timer == 0) {
           igmp_timeout(netif, group);
+        } else {
+          nwake = nwake > group->timer ? group->timer : nwake;
         }
       }
       group = group->next;
     }
+  }
+  g_last_run = time_now;
+
+  LWIP_ASSERT("igmp_tmr: next_wake must not zero.\r\n", nwake != 0);
+  if (nwake == INT_MAX) {
+    g_next_wake = INT_MAX;
+    /* nothing to do, disable igmp timer */
+    sys_timeouts_set_timer_enable(false, igmp_tmr);
+  } else {
+    g_next_wake = nwake * IGMP_TMR_INTERVAL;
+    /* re-schdule igmp timer */
+    sys_untimeout((sys_timeout_handler)igmp_tmr, NULL);
+    sys_timeout(g_next_wake, (sys_timeout_handler)igmp_tmr, NULL);
   }
 }
 
@@ -700,6 +731,14 @@ igmp_start_timer(struct igmp_group *group, u8_t max_time)
 
   if (group->timer == 0) {
     group->timer = 1;
+  }
+
+  u32_t tmp = sys_now() + group->timer * IGMP_TMR_INTERVAL;
+  if (tmp < g_next_wake) {
+    g_next_wake = tmp;
+    /* re-schdule igmp timer */
+    sys_untimeout((sys_timeout_handler)igmp_tmr, NULL);
+    sys_timeout(g_next_wake, (sys_timeout_handler)igmp_tmr, NULL);
   }
 }
 

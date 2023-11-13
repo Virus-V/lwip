@@ -121,6 +121,8 @@ void sys_restart_timeouts(void);
 void sys_check_timeouts(void);
 u32_t sys_timeouts_sleeptime(void);
 
+void sys_timeouts_set_timer_enable(bool enable, lwip_cyclic_timer_handler handler);
+
 #if LWIP_TCP
 void tcpip_tmr_compensate_tick(void);
 #endif
