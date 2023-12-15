@@ -66,6 +66,7 @@
 #include "lwip/netif.h"
 #include "lwip/autoip.h"
 #include "lwip/etharp.h"
+#include "lwip/timeouts.h"
 #include "lwip/prot/autoip.h"
 
 #include <string.h>
@@ -321,6 +322,8 @@ autoip_start_probing(struct netif *netif)
   if (autoip->tried_llipaddr > MAX_CONFLICTS) {
     autoip->ttw = RATE_LIMIT_INTERVAL * AUTOIP_TICKS_PER_SECOND;
   }
+
+  sys_timeouts_set_timer_enable(true, autoip_tmr);
 }
 
 /**
@@ -367,6 +370,9 @@ void
 autoip_tmr(void)
 {
   struct netif *netif;
+
+  bool disable_autoip_tmr = true;
+
   /* loop through netif's */
   NETIF_FOREACH(netif) {
     struct autoip *autoip = netif_autoip_data(netif);
@@ -386,6 +392,7 @@ autoip_tmr(void)
 
       switch (autoip->state) {
         case AUTOIP_STATE_PROBING:
+          disable_autoip_tmr = false;
           if (autoip->ttw == 0) {
             if (autoip->sent_num >= PROBE_NUM) {
               /* Switch to ANNOUNCING: now we can bind to an IP address and use it */
@@ -417,6 +424,7 @@ autoip_tmr(void)
           break;
 
         case AUTOIP_STATE_ANNOUNCING:
+          disable_autoip_tmr = false;
           if (autoip->ttw == 0) {
             autoip_arp_announce(netif);
             LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_tmr() ANNOUNCING Sent Announce\n"));
@@ -441,6 +449,8 @@ autoip_tmr(void)
       }
     }
   }
+
+  sys_timeouts_set_timer_enable(!disable_autoip_tmr, autoip_tmr);
 }
 
 /**

@@ -6,7 +6,7 @@
  * @ingroup ip6
  * Multicast listener discovery for IPv6. Aims to be compliant with RFC 2710.
  * No support for MLDv2.\n
- * Note: The allnodes (ff01::1, ff02::1) group is assumed be received by your 
+ * Note: The allnodes (ff01::1, ff02::1) group is assumed be received by your
  * netif since it must always be received for correct IPv6 operation (e.g. SLAAC).
  * Ensure the netif filters are configured accordingly!\n
  * The netif flags also need NETIF_FLAG_MLD6 flag set to enable MLD6 on a
@@ -65,6 +65,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/netif.h"
 #include "lwip/memp.h"
+#include "lwip/timeouts.h"
 #include "lwip/stats.h"
 
 #include <string.h>
@@ -496,12 +497,14 @@ void
 mld6_tmr(void)
 {
   struct netif *netif;
+  bool disable_mld6_tmr = true;
 
   NETIF_FOREACH(netif) {
     struct mld_group *group = netif_mld6_data(netif);
 
     while (group != NULL) {
       if (group->timer > 0) {
+        disable_mld6_tmr = false;
         group->timer--;
         if (group->timer == 0) {
           /* If the state is MLD6_GROUP_DELAYING_MEMBER then we send a report for this group */
@@ -515,6 +518,8 @@ mld6_tmr(void)
       group = group->next;
     }
   }
+
+  sys_timeouts_set_timer_enable(!disable_mld6_tmr, mld6_tmr);
 }
 
 /**
@@ -547,6 +552,8 @@ mld6_delayed_report(struct mld_group *group, u16_t maxresp_in)
       ((group->timer == 0) || (maxresp < group->timer)))) {
     group->timer = maxresp;
     group->group_state = MLD6_GROUP_DELAYING_MEMBER;
+
+    sys_timeouts_set_timer_enable(true, mld6_tmr);
   }
 }
 

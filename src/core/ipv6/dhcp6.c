@@ -63,6 +63,7 @@
 #include "lwip/prot/dhcp6.h"
 #include "lwip/def.h"
 #include "lwip/udp.h"
+#include "lwip/timeouts.h"
 #include "lwip/dns.h"
 
 #include <string.h>
@@ -130,6 +131,7 @@ const ip_addr_t dhcp6_All_DHCP6_Servers = IPADDR6_INIT_HOST(0xFF020000, 0, 0, 0x
 static struct udp_pcb *dhcp6_pcb;
 static u8_t dhcp6_pcb_refcount;
 
+static u32_t g_last_run, g_next_wake;
 
 /* receive, unfold, parse and free incoming messages */
 static void dhcp6_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
@@ -317,6 +319,8 @@ dhcp6_enable_stateless(struct netif *netif)
 {
   struct dhcp6 *dhcp6;
 
+  g_last_run = g_next_wake = sys_now();
+
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_enable_stateless(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
 
   dhcp6 = dhcp6_get_struct(netif, "dhcp6_enable_stateless()");
@@ -453,14 +457,14 @@ dhcp6_information_request(struct netif *netif, struct dhcp6 *dhcp6)
 {
   const u16_t requested_options[] = {
 #if LWIP_DHCP6_PROVIDE_DNS_SERVERS
-    DHCP6_OPTION_DNS_SERVERS, 
+    DHCP6_OPTION_DNS_SERVERS,
     DHCP6_OPTION_DOMAIN_LIST
 #endif
 #if LWIP_DHCP6_GET_NTP_SRV
     , DHCP6_OPTION_SNTP_SERVERS
 #endif
   };
-  
+
   u16_t msecs;
   struct pbuf *p_out;
   u16_t options_out_len;
@@ -493,6 +497,12 @@ dhcp6_information_request(struct netif *netif, struct dhcp6 *dhcp6)
   msecs = (u16_t)((dhcp6->tries < 6 ? 1 << dhcp6->tries : 60) * 1000);
   dhcp6->request_timeout = (u16_t)((msecs + DHCP6_TIMER_MSECS - 1) / DHCP6_TIMER_MSECS);
   LWIP_DEBUGF(DHCP6_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_information_request(): set request timeout %"U16_F" msecs\n", msecs));
+
+  sys_timeouts_set_timer_enable(true, dhcp6_tmr);
+  g_next_wake = dhcp6->request_timeout * DHCP6_TIMER_MSECS;
+  /* re-schdule igmp timer */
+  sys_untimeout((sys_timeout_handler)dhcp6_tmr, NULL);
+  sys_timeout(g_next_wake, (sys_timeout_handler)dhcp6_tmr, NULL);
 }
 
 static err_t
@@ -799,6 +809,11 @@ void
 dhcp6_tmr(void)
 {
   struct netif *netif;
+  u32_t time_now = sys_now();
+  int nwake = INT_MAX;
+
+  u32_t timer_diff = (time_now - g_last_run) / DHCP6_TIMER_MSECS;
+
   /* loop through netif's */
   NETIF_FOREACH(netif) {
     struct dhcp6 *dhcp6 = netif_dhcp6_data(netif);
@@ -806,15 +821,30 @@ dhcp6_tmr(void)
     if (dhcp6 != NULL) {
       /* timer is active (non zero), and is about to trigger now */
       if (dhcp6->request_timeout > 1) {
-        dhcp6->request_timeout--;
-      } else if (dhcp6->request_timeout == 1) {
-        dhcp6->request_timeout--;
-        /* { dhcp6->request_timeout == 0 } */
-        LWIP_DEBUGF(DHCP6_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_tmr(): request timeout\n"));
-        /* this client's request timeout triggered */
-        dhcp6_timeout(netif, dhcp6);
+        LWIP_ASSERT("dhcp6_tmr: timer underflow.\r\n", timer_diff <= dhcp6->request_timeout);
+        dhcp6->request_timeout -= timer_diff;
+        if (dhcp6->request_timeout == 0) {
+          /* { dhcp6->request_timeout == 0 } */
+          LWIP_DEBUGF(DHCP6_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp6_tmr(): request timeout\n"));
+          /* this client's request timeout triggered */
+          dhcp6_timeout(netif, dhcp6);
+        } else {
+          nwake = nwake > dhcp6->request_timeout ? dhcp6->request_timeout : nwake;
+        }
       }
     }
+  }
+
+  LWIP_ASSERT("dhcp6_tmr: next_wake must not zero.\r\n", nwake != 0);
+  if (nwake == INT_MAX) {
+    g_next_wake = INT_MAX;
+    /* nothing to do, disable igmp timer */
+    sys_timeouts_set_timer_enable(false, dhcp6_tmr);
+  } else {
+    g_next_wake = nwake * DHCP6_TIMER_MSECS;
+    /* re-schdule igmp timer */
+    sys_untimeout((sys_timeout_handler)dhcp6_tmr, NULL);
+    sys_timeout(g_next_wake, (sys_timeout_handler)dhcp6_tmr, NULL);
   }
 }
 
